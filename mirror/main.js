@@ -1,24 +1,56 @@
+
+
+/**
+
+Usage: mirror.add('Kitten', ['name', 'age']);
+
+This will create a Mongoose Schema with the supplied keys
+and expose a REST interface to the model.
+
+GET  /kitten 			> all
+GET  /Kitten/:id 		> one
+GET  /kitten/gte/:Date 	> all newer than :Date
+PUT  /kitten 			> add (with req.body)
+POST /kitten/:id 		> update (with req.body)
+DELETE /kitten/:id 		> delete 
+
+
+## TODO
+
+You can append '.json|csv|simple' to all GET requests. JSON is the default.
+Example:
+	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.kv`
+	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.json`
+
+
+## Notes
+
+Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+
+**/
+
+
+
 var mongoose 	= require('mongoose');
 var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
 var util 		= require('util');
 
-mongoose.connect('mongodb://localhost/mirrordb');
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function (callback) {
-	console.log( chalk.green("Mirror connected to Mongo") +' @'+ dbname );
-});
-
-
+var db;
 var app;
 var models = [];
 var dbname = '';
+
 module.exports.init = function(_app, _databaseName){
 
 	dbname = _databaseName;
 	mongoose.connect('mongodb://localhost/'+ dbname );
+	db = mongoose.connection;
+	db.on('error', console.error.bind(console, 'connection error:'));
+	db.once('open', function (callback) {
+		console.log( chalk.green("Mirror connected to Mongo") +' @'+ dbname );
+	});
 
 	app = _app;
 
@@ -52,32 +84,6 @@ module.exports.init = function(_app, _databaseName){
 		next();
 	});
 }
-
-/**
-
-Usage: mirror.add('Kitten', ['name', 'age']);
-
-This will create a Mongoose Schema with the supplied keys
-and expose a REST interface to the model.
-
-GET  /kitten 			> all
-GET  /Kitten/:id 		> one
-GET  /kitten/gte/:Date 	> all newer than :Date
-PUT  /kitten 			> add (with req.body)
-POST /kitten/:id 		> update (with req.body)
-DELETE /kitten/:id 		> delete 
-
-You can append '.json|csv|simple' to all GET requests. JSON is the default.
-Example:
-	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.kv`
-	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.json`
-
-## Notes
-
-Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
-
-**/
-
 
 
 module.exports.add = function(_name, fields){
