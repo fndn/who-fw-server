@@ -2,6 +2,7 @@ var mongoose 	= require('mongoose');
 var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
+var util 		= require('util');
 
 mongoose.connect('mongodb://localhost/mirrordb');
 var db = mongoose.connection;
@@ -23,6 +24,28 @@ module.exports.init = function(_app){
 	// 
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
+
+	//
+	app.use(function(req, res, next){
+
+		res.apiResponse = function(data) {
+			if (req.query.callback) {
+				res.jsonp(data);
+			} else {
+				console.log( chalk.grey( util.inspect(data)) );
+				res.json(data);
+			}
+		};
+
+		res.apiError = function(msg) {
+			msg = msg || 'Error';
+			console.log( chalk.red('ERROR: '+ msg ));
+			res.status(500);
+			res.json({'status':'error', 'msg': msg});
+		};
+		
+		next();
+	});
 }
 
 /**
@@ -63,6 +86,7 @@ module.exports.add = function(_name, fields){
 	})
 	doc['_timestamp'] = '';
 	var _schema = mongoose.Schema(doc);
+	console.log('doc', doc);
 
 	models[name] = mongoose.model(name, _schema);
 
@@ -70,10 +94,8 @@ module.exports.add = function(_name, fields){
 	app.get('/'+name, function(req, res){
 		console.log("Mirror GET", name, req.url );
 		models[name].find( function(err, items) {
-			if (err) return console.error(err);
-			
-			console.log(items);
-			res.json({status:'ok', msg:items});
+			if (err) return res.apiError(err);
+			res.apiResponse({status:'ok', msg:items});
 		});
 	});
 
@@ -86,12 +108,7 @@ module.exports.add = function(_name, fields){
 		console.log("req.query:", req.query, "req.params:", req.params, "req.body:", req.body, "opts:", opts );
 
 		models[name].findById(opts.id).exec(function(err, item) {
-			if (err){
-				_error(res, err.message, opts);
-				return console.log( chalk.grey(err) );
-			}
-			
-			console.log( chalk.grey(item) );
+			if (err) return res.apiError(err);
 			res.json({status:'ok', msg:item});
 		});
 	});
@@ -104,9 +121,7 @@ module.exports.add = function(_name, fields){
 			_timestamp: { $gte: startDate }
 		},
 		function(err, items) {
-			if (err) return console.error(err);
-			
-			console.log(items);
+			if (err) return res.apiError(err);
 			res.json({status:'ok', msg:items});
 		});
 	});
@@ -117,10 +132,12 @@ module.exports.add = function(_name, fields){
 		
 		entry['_timestamp'] = new Date();
 		
-		console.log("Mirror PUT", name, entry );
+
+		if( Object.keys(entry).length == 1 ){
+			return res.apiError('no urlencoded data received');
+		}
 		new models[name](entry).save(function (err, item) {
-			if (err) return console.error(err);
-			console.log("Mirror: Added ", item);
+			if (err) return res.apiError(err);
 			res.json({status:'ok', msg:item});
 		});
 	});
@@ -130,8 +147,8 @@ module.exports.add = function(_name, fields){
 		console.log("Mirror POST", name, req.params, req.body );
 		
 		models[name].findOneAndUpdate({id:req.params.id}, req.body, {upsert:true}, function (err, item) {
-			if (err) return console.error(err);
-			console.log("Mirror: Updated ", item);
+			if (err) return res.apiError(err);
+			console.log("TODO Mirror: Updated ", item);
 			res.json({status:'ok', msg:item});
 		});
 	});
@@ -139,3 +156,4 @@ module.exports.add = function(_name, fields){
 	//TODO (as we want to conform to the JSON API Schema)
 	// app.options()
 }
+
