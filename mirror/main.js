@@ -2,7 +2,6 @@ var mongoose 	= require('mongoose');
 var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
-var json2csv 	= require('nice-json2csv');
 
 mongoose.connect('mongodb://localhost/mirrordb');
 var db = mongoose.connection;
@@ -93,8 +92,7 @@ module.exports.add = function(_name, fields){
 			}
 			
 			console.log( chalk.grey(item) );
-			//res.json({status:'ok', msg:item});
-			_ok(res, [item], opts);
+			res.json({status:'ok', msg:item});
 		});
 	});
 
@@ -140,51 +138,4 @@ module.exports.add = function(_name, fields){
 
 	//TODO (as we want to conform to the JSON API Schema)
 	// app.options()
-}
-
-
-function _check( params ){
-	var parts = params.split(/\./g);
-	var format = (parts[1] || 'json').toLowerCase();
-	return {id:parts[0], format:format, parts:parts, raw:params};
-}
-
-function _error(res, msg, opts ){
-	res.json({status:'error', data:msg});
-}
-
-function _ok(res, obj, opts){
-	console.log( chalk.yellow("format:"+ opts.format ));
-
-	switch( opts.format ){
-		case 'csv':
-			console.log("as CSV", Object.keys(obj), obj._doc, obj.toObject() );
-			res.setHeader("Content-Type", "text/csv");
-			//res.send( json2csv.convert(obj.toObject() ) );
-			res.send("NOT WORING YET");
-			res.end();	
-			
-			break;
-
-		case 'kv':
-			console.log("as Key:Value", obj, obj.length);
-			res.setHeader("Content-Type", "text/plain");
-
-			for(var i=0; i<obj.length; i++){
-				var line = [];
-				var item = obj[i].toObject()
-				var keys = Object.keys( item );
-				for(var j=0; j<keys.length; j++){
-					line.push( keys[j] +':' + item[keys[j]] );
-				}
-				res.send( line.join(', ') +"\n" );
-			}
-			res.end();
-			break;
-			
-		case 'json':
-			res.json({status:'ok', data:obj});
-			break;
-	}
-	
 }
