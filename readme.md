@@ -1,20 +1,20 @@
-## Arch
+# Mirror
 
-- index: login
-- main: tabbar (sets CRUD, set-list (CRUD), content (CRUD))
-- setModel
-- itemModel
-- localStorage?
-- auto build Pages from Model?
+Simple API oriented MonogoDB-based data store
 
 
-## GPS stamped on images
-In progess at: https://github.com/lwansbrough/react-native-camera/issues/56#issuecomment-126847700
+Call `mirror.init(expressApp, 'databaseName' );` to connect Mirror to Mongo. 
+
+Call `mirror.add(collectionName, [fieldNames]);` to create 
+
+- a Mongoose Schema  
+- a MongoDB Collection
+- and expose GET, PUT, POST and DELETE actions 
 
 
+### ROADMAP
 
-## OCR (only testing, for now)
-
-https://www.npmjs.com/package/node-tesseract
-brew install tesseract --all-languages
-npm install node-tesseract
+- Add URL mountpoint for routes
+- Add utility functions ala `GET /collection/gte/{date}`, ignore if-exists, consolidate, next-id etc.
+- Add Auth middleware
+- Add Image store (and extract GPS data if stamped on images)
