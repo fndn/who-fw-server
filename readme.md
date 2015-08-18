@@ -1,3 +1,7 @@
+(for now, this repo is just a clone of my Mirror project. Check back later)
+
+
+
 # Mirror
 
 Simple API oriented MonogoDB-based data store
