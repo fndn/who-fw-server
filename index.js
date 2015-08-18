@@ -1,28 +1,31 @@
+// mirror server example
 
-var express     = require('express');
-var fs 			= require('fs');
-var chalk 		= require('chalk');
-
-var port = 8080;
-var _package = require('./package.json');
-var identity = _package.name;
-var version  = _package.version;
+var port 	= 8080;
+var pack 	= require('./package.json');
+var express = require('express');
+var chalk 	= require('chalk');
+var mirror 	= require('./mirror/main.js');
 
 var app = express();
-app.disable('x-powered-by');
-app.set('etag', 'strong');
 
 app.use(function(req, res, next){
 	console.log( req.url );
     next();
 });
+
 app.get('/version', function(req, res){
-	res.json({'status':'ok', 'code':'VERSION', 'message': identity+' v.'+version});
-});
-app.post('/upload', function(req, res) {
-    console.log(JSON.stringify(req.files));
+	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
 
+//TODO: add auth middleware
+//app.all('/*', authmiddelware);
 
+// connect mirror to express
+mirror.init( app );
+
+// Add model API
+mirror.add('Kitten', ['name', 'age']);
+
+// Start serving
 var server = app.listen( port );
-console.log("Running '"+ identity +"' v."+ version +' on port '+ port );
+console.log("Running '"+ pack.name +"' v."+ pack.version +' on port '+ port );

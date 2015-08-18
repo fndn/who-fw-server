@@ -1,0 +1,18 @@
+{
+  "name": "mirror",
+  "version": "0.0.1",
+  "description": "The Mirror node module",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "js@base.io",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.13.3",
+    "chalk": "^1.1.0",
+    "moment": "^2.10.6",
+    "mongoose": "^4.1.2",
+    "nice-json2csv": "^0.2.0"
+  }
+}
