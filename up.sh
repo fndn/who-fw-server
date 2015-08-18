@@ -4,7 +4,7 @@
 
 DIR=`pwd`
 SERVER="46.101.177.65"
-APIDOMAIN="whofw.fndn.dk"
+APIDOMAIN="whofw.fndn.dk:8080"
 
 
 
@@ -26,5 +26,5 @@ sleep 10 # give the app time to (re)start
 
 
 echo "updated server, now running version: curl http://$APIDOMAIN/api/version"
-curl http://$APIDOMAIN/api/version
+curl http://$APIDOMAIN/version
 echo ""

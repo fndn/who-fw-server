@@ -84,9 +84,11 @@ module.exports.add = function(_name, fields){
 	fields.forEach( function(field){
 		doc[field] = ''
 	})
+	console.log( chalk.grey('=> '), doc);
+
 	doc['_timestamp'] = '';
 	var _schema = mongoose.Schema(doc);
-	console.log('doc', doc);
+	
 
 	models[name] = mongoose.model(name, _schema);
 

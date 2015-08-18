@@ -12,13 +12,17 @@ var mex_middleware 	= require('./mongo-express/middleware');
 
 var app = express();
 
+/*
 app.use(function(req, res, next){
 	console.log( req.url );
     next();
 });
+*/
 
 app.get('/version', function(req, res){
-	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
+	var msg = {'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version};
+	console.log( chalk.grey( msg ));
+	res.json(msg);
 });
 
 //TODO: add auth middleware
@@ -34,6 +38,7 @@ mirror.add('countries', ['name', 'countryCode']);
 
 // Connect Mongo-Express
 app.use('/mex', mex_middleware(mex_config));
+console.log( chalk.green("Enabling Mongo-Express on /mex") );
 
 // Start serving
 var server = app.listen( port );
