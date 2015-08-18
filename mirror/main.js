@@ -8,24 +8,29 @@ mongoose.connect('mongodb://localhost/mirrordb');
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function (callback) {
-	console.log( chalk.green("Mirror connected to Mongo"));
+	console.log( chalk.green("Mirror connected to Mongo") +' @'+ dbname );
 });
 
 
 var app;
 var models = [];
-module.exports.init = function(_app){
+var dbname = '';
+module.exports.init = function(_app, _databaseName){
+
+	dbname = _databaseName;
+	mongoose.connect('mongodb://localhost/'+ dbname );
+
 	app = _app;
 
 	// set express 'sensible defaults' (optional)
 	app.disable('x-powered-by');
 	app.set('etag', 'strong');
 
-	// 
+	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
 
-	//
+	// Connect Middleware
 	app.use(function(req, res, next){
 
 		res.apiResponse = function(data) {
@@ -136,7 +141,7 @@ module.exports.add = function(_name, fields){
 		
 
 		if( Object.keys(entry).length == 1 ){
-			return res.apiError('no urlencoded data received');
+			return res.apiError(req.method +' '+ req.url +' : no urlencoded data received');
 		}
 		new models[name](entry).save(function (err, item) {
 			if (err) return res.apiError(err);

@@ -29,7 +29,7 @@ app.get('/version', function(req, res){
 //app.all('/*', authmiddelware);
 
 // Connect mirror to express
-mirror.init( app );
+mirror.init( app, 'who-fw-dev' );
 
 // Add model API
 mirror.add('countries', ['name', 'countryCode']);
