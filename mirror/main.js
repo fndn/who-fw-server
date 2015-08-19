@@ -65,6 +65,11 @@ module.exports.init = function(_app, _databaseName){
 	// Connect Middleware
 	app.use(function(req, res, next){
 
+		res.e404 = function(req) {
+			res.status(404);
+			res.json({'status':'error', 'msg': req.method +' '+ req.url +' : NotFound', 'code':404 });
+		};
+
 		res.apiResponse = function(data) {
 			if (req.query.callback) {
 				res.jsonp(data);
@@ -78,9 +83,20 @@ module.exports.init = function(_app, _databaseName){
 			msg = msg || 'Error';
 			console.log( chalk.red('ERROR: '+ msg ));
 			res.status(500);
-			res.json({'status':'error', 'msg': msg});
+			res.json({'status':'error', 'msg': msg, 'code':500});
 		};
 		
+		// log access to console
+		//TODO: use logger
+		console.log( req.method +' '+ req.url );
+
+		// make sure put and post requests contain data
+		if( req.method == 'PUT' || req.method == 'POST' ){
+			if( Object.keys(req.body).length == 0 ){
+				return res.apiError(req.method +' '+ req.url +' : no urlencoded data received (0)');
+			}
+		}
+
 		next();
 	});
 }
@@ -97,76 +113,71 @@ module.exports.add = function(_name, fields){
 	})
 	console.log( chalk.grey('=> '), doc);
 
+	// add _timestamp prop to the schema. Used for both created_at and updated_at
 	doc['_timestamp'] = '';
-	var _schema = mongoose.Schema(doc);
-	
+	models[name] = mongoose.model(name, mongoose.Schema(doc) );
 
-	models[name] = mongoose.model(name, _schema);
 
-	// find all
+	// api: find all
 	app.get('/'+name, function(req, res){
-		console.log("Mirror GET", name, req.url );
 		models[name].find( function(err, items) {
 			if (err) return res.apiError(err);
 			res.apiResponse({status:'ok', msg:items});
 		});
 	});
 
-	// findOne by _id
+	// api: findOne by _id
 	app.get('/'+name +'/:id', function(req, res){
-		console.log("Mirror GET", name, req.url);
-
-		var opts = _check(req.params.id);
-
-		console.log("req.query:", req.query, "req.params:", req.params, "req.body:", req.body, "opts:", opts );
-
-		models[name].findById(opts.id).exec(function(err, item) {
+		models[name].findById(req.params.id).exec(function(err, item) {
 			if (err) return res.apiError(err);
-			res.json({status:'ok', msg:item});
+			res.apiResponse({status:'ok', msg:item});
 		});
 	});
 
-	// find all newer than
+	// api: find all newer than
 	app.get('/'+name +'/gte/:date', function(req, res){
 		var startDate = new Date(req.params.date);
-		console.log("Mirror GET since", name, req.url, req.params.date, startDate );
+		console.log( name + " since", req.params.date, ' -> ', startDate );
 		models[name].find({
 			_timestamp: { $gte: startDate }
 		},
 		function(err, items) {
 			if (err) return res.apiError(err);
-			res.json({status:'ok', msg:items});
+			res.apiResponse({status:'ok', msg:items});
 		});
 	});
 
-	// create 
+	// api: create 
 	app.put('/'+name, function(req, res){
-		var entry = req.body; // only keys already defined in schema will be saved
-		
-		entry['_timestamp'] = new Date();
-		
-
-		if( Object.keys(entry).length == 1 ){
-			return res.apiError(req.method +' '+ req.url +' : no urlencoded data received');
-		}
-		new models[name](entry).save(function (err, item) {
+		// only keys already defined in schema will be saved
+		req.body._timestamp = new Date(); // created_at
+		new models[name](req.body).save(function (err, item) {
 			if (err) return res.apiError(err);
-			res.json({status:'ok', msg:item});
+			res.apiResponse({status:'ok', msg:item});
 		});
 	});
 
-	//TODO update one by id
+	// api: update one by id
 	app.post('/'+name +'/:id', function(req, res){
-		console.log("Mirror POST", name, req.params, req.body );
-		
-		models[name].findOneAndUpdate({id:req.params.id}, req.body, {upsert:true}, function (err, item) {
+		req.body._timestamp = new Date(); // updated_at
+		models[name].findOneAndUpdate(req.params.id, req.body, {new:true, upsert:true}, function (err, item) {
 			if (err) return res.apiError(err);
-			console.log("TODO Mirror: Updated ", item);
-			res.json({status:'ok', msg:item});
+			res.apiResponse({status:'ok', msg:item});
 		});
 	});
 
-	//TODO (as we want to conform to the JSON API Schema)
-	// app.options()
+	// api: delete
+	app.delete('/'+name+'/:id', function(req, res){
+		console.log('delete ', req.params.id);
+		models[name].findById(req.params.id).exec(function(err, item) {
+			if (err) return res.apiError(err);
+			if (!item) return res.e404(req);
+			item.remove( function(err){
+				if (err) return res.apiError(err);
+				res.apiResponse({status:'ok', msg:'removed'});	
+			});
+		});
+	});
+
 }
 
