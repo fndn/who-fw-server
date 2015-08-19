@@ -12,6 +12,13 @@ var mex_mw 	= require('./mongo-express/middleware');
 
 var app = express();
 
+
+app.use(function(req, res, next){
+	// log access to console
+	console.log( req.method +' '+ req.url );
+	next();
+})
+
 app.get('/version', function(req, res){
 	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
@@ -24,12 +31,18 @@ mirror.init( app, 'who-fw-dev' );
 
 // Add model API
 mirror.add('countries', ['name', 'countryCode']);
-//mirror.add('locations', ['name', 'countryCode']);
+mirror.add('testing', ['name']);
 
 
 // Connect Mongo-Express
 app.use('/mex', mex_mw(mex_cnf));
 console.log( chalk.green("Enabling Mongo-Express on /mex") );
+
+
+app.get('/*', function(req, res){
+	res.json({'status':'ok', 'code':'DEFAULT', 'message': pack.name +' v.'+ pack.version});
+});
+
 
 // Start serving
 var server = app.listen( port );
