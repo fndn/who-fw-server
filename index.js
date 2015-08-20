@@ -15,7 +15,7 @@ var app = express();
 
 app.use(function(req, res, next){
 	// log access to console
-	console.log( req.method +' '+ req.url );
+	//console.log("MY", req.method +' '+ req.url );
 	next();
 })
 
@@ -30,7 +30,7 @@ app.get('/version', function(req, res){
 mirror.init( app, 'who-fw-dev' );
 
 // Add model API
-mirror.add('countries', ['name', 'countryCode']);
+mirror.add('countries', ['name', 'countryCode', 'removed']);
 mirror.add('testing', ['name']);
 
 

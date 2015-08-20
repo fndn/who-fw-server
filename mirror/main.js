@@ -17,7 +17,8 @@ DELETE /kitten/:id 		> delete
 
 ## TODO
 
-You can append '.json|csv|simple' to all GET requests. JSON is the default.
+Append '.json|csv|simple' to all GET requests. JSON is the default.
+Or maybe just .tsv ?
 Example:
 	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.kv`
 	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.json`
@@ -25,7 +26,11 @@ Example:
 
 ## Notes
 
-Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+gte function:
+- Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+
+diff function:
+- The objects *must* have a "name" field
 
 **/
 
@@ -58,6 +63,7 @@ module.exports.init = function(_app, _databaseName){
 	app.disable('x-powered-by');
 	app.set('etag', 'strong');
 
+
 	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use(bodyParser.json());
@@ -74,7 +80,8 @@ module.exports.init = function(_app, _databaseName){
 			if (req.query.callback) {
 				res.jsonp(data);
 			} else {
-				console.log( chalk.grey( util.inspect(data)) );
+				//console.log( chalk.grey( util.inspect(data, false,null)) );
+				console.log( util.inspect(data, false,null,true) );
 				res.json(data);
 			}
 		};
@@ -157,13 +164,43 @@ module.exports.add = function(_name, fields){
 		});
 	});
 
-	// api: update one by id
+	// api: update one by id AND diff
 	app.post('/'+name +'/:id', function(req, res){
-		req.body._timestamp = new Date(); // updated_at
-		models[name].findOneAndUpdate(req.params.id, req.body, {new:true, upsert:true}, function (err, item) {
-			if (err) return res.apiError(err);
-			res.apiResponse({status:'ok', msg:item});
-		});
+
+		if( req.params.id == 'diff' ){
+			//Note: The diff function only works if there is a $name field on the objects
+			var cdata = req.body.list;
+			console.log("computing diff on table '"+ name +"'\n", cdata );
+			_compute_dif(name, cdata, function(err, result){
+				if (err) return res.apiError(err);
+				res.apiResponse({status:'ok', msg:result});
+			});
+
+		}else{
+			console.log("update ", req.params.id );
+
+			/*
+			models[name].findById(req.params.id).exec(function(err, item) {
+				if (err) return res.apiError(err);
+				//res.apiResponse({status:'ok', msg:item});
+				item._timestamp = new Date(); // updated_at
+				item.
+			});
+			
+			*/
+			/*
+			req.body._timestamp = new Date(); // updated_at
+			models[name].findOneAndUpdate(req.params.id, req.body, {new:true, upsert:true}, function (err, item) {
+				if (err) return res.apiError(err);
+				res.apiResponse({status:'ok', msg:item});
+			});
+			*/
+			req.body._timestamp = new Date(); // updated_at
+			models[name].update({_id:req.params.id}, req.body, {new:true, upsert:false}, function (err, item) {
+				if (err) return res.apiError(err.message);
+				res.apiResponse({status:'ok', msg:item});
+			});
+		}
 	});
 
 	// api: delete
@@ -179,5 +216,144 @@ module.exports.add = function(_name, fields){
 		});
 	});
 
+}
+
+// Utilities
+
+function _compute_dif(tablename, list, cb){
+
+	var batch = []; // will hold records to create on server
+	
+	models[tablename].find( function(err, items) {
+
+		var ret = {table:tablename, add:[], put:[], del:[]};
+		var i, len, o, cr;
+		// compute $add and $put
+		len = items.length;
+		for(var i=0; i<len; i++){
+			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i].name) ){
+				// record does not exist on the client
+				var o = _strip_fromObject( items[i]._doc );
+				if( items[i].removed != 'Y' ){
+					//console.log("ADD", o);
+					if( Object.keys(o).length > 0 ){
+						ret.add.push(o);
+					}
+				}
+			
+			}else{
+				// records match on "name", compare the other keys - treating server as truth
+
+				var o = _strip_fromObject( items[i]._doc );
+
+				if( cr = _compareObjects(o, list) ){
+
+					//console.log("");
+					//console.log("Value Diff");
+					//console.log(" server-record:", o);
+					//console.log(" client-record:", cr);
+
+					if( items[i].removed != 'Y' ){
+						//console.log(" PUT:", o);
+						o._id = cr._id;
+						ret.put.push(o);
+					}
+				}
+			}
+		}
+		// compute server add
+		len = list.length;
+		for(var i=0; i<len; i++){
+			if( !_doesArrayContainObjectWithKeyValue(items, "name", list[i].name) ){
+				// record does not exist on the server
+				var co = list[i];
+				delete co._id;
+				
+				//Check for Empty keys
+				var _tmp = [];
+				Object.keys(co).forEach( function(k){
+					_tmp.push( co[k] );
+				});
+				if( _tmp.join('') != '' ){
+					co._timestamp = new Date(); // created_at
+					var doc = new models[tablename](co);
+					batch.push( doc );
+					console.log("SERVER-ADD", co, doc);	
+				}
+			}			
+		}
+		// compute $del (manually adding a $removed key to the server table)
+		len = list.length;
+		for(var i=0; i<len; i++){
+			if( so = _findObjectByKeyValue(items, "name", list[i].name) ){
+				// record exist on the server but not (or are different) on the client
+				// only handle those that does not exist
+				if( _findObjectByKeyValue(ret.put, "name", list[i].name)){
+					// record has already been added to put (for update)
+				}else{
+					// only send if its not marked as removed on the server
+					if( so.removed == 'Y'){
+						ret.del.push(list[i]);
+					}
+				}
+			}			
+		}		
+	
+		cb(null, ret);
+
+		if( batch.length ){
+			console.log( "Adding to database");
+			models[tablename].create(batch, function (err, item) {
+				if (err) console.log("Error: Could not create", tablename, batch);
+				console.log("Added batch to", tablename, batch);
+			});
+		}
+
+	});
+}
+
+function _doesArrayContainObjectWithKeyValue( arr, key, val ){
+	for(var i=0; i<arr.length; i++){
+		//console.log("comparing ", arr[i], key, val, ( arr[i][key] == val ) );
+		if( arr[i][key] == val ) return true;
+	}
+	return false;
+}
+
+function _compareObjects(o1, arr){
+	var o1k = Object.keys(o1);
+	var match = null;
+	// find $name match
+	for(var i=0; i<arr.length; i++){
+		if( arr[i].name == o1.name ){
+			var o2 = arr[i];
+			o1k.forEach( function(k){
+				//console.log("comparing on key", k, o1[k], o2[k], ( o1[k] == o2[k] ) );
+				if( o1[k] != o2[k] ) match = o2; //matching = false;
+			});
+		}
+	}	
+	//return matching;
+	return match;
+}
+
+function _findObjectByKeyValue( arr, key, val ){
+	for(var i=0; i<arr.length; i++){
+		if( arr[i][key] == val ) return arr[i];
+	}
+	return false;
+}
+
+
+function _strip_fromObject(obj){
+	var ret = {};
+	for(var k in obj){
+		//console.log("k", k);
+		if( k.substr(0,1) != '_' && k != 'removed'){
+			ret[k] = obj[k];
+		}
+	}
+	//console.log("k klean:", ret);
+	return ret;
 }
 
