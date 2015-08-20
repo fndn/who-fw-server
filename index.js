@@ -29,9 +29,15 @@ app.get('/version', function(req, res){
 // Connect mirror to express
 mirror.init( app, 'who-fw-dev' );
 
-// Add model API
-mirror.add('countries', ['name', 'countryCode', 'removed']);
-mirror.add('testing', ['name']);
+// Add model APIs
+mirror.add('countries', 	['removed', 'name', 'countryCode']);
+mirror.add('locations',		['removed', 'city', 'neighbourhood', 'street', 'incomeType', 'countryId'});
+mirror.add('incomeTypes', 	['removed', 'name']);
+mirror.add('storeTypes', 	['removed', 'name']);
+mirror.add('brands', 		['removed', 'name']);
+mirror.add('registrations',	['removed', 'name']);
+
+mirror.add('testing', 		['removed', 'name']);
 
 
 // Connect Mongo-Express
