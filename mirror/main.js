@@ -112,7 +112,7 @@ module.exports.init = function(_app, _databaseName){
 module.exports.add = function(_name, fields){
 	console.log( chalk.green("Mirror.add:", _name));
 
-	var name = _name.toLowerCase();
+	var name = _name;//.toLowerCase();
 	
 	var doc = {};
 	fields.forEach( function(field){

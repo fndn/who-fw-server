@@ -31,7 +31,7 @@ mirror.init( app, 'who-fw-dev' );
 
 // Add model APIs
 mirror.add('countries', 	['removed', 'name', 'countryCode']);
-mirror.add('locations',		['removed', 'city', 'neighbourhood', 'street', 'incomeType', 'countryId']);
+mirror.add('locations',		['removed', 'name', 'neighbourhood', 'street', 'incomeType', 'countryId']);
 mirror.add('incomeTypes', 	['removed', 'name']);
 mirror.add('storeTypes', 	['removed', 'name']);
 mirror.add('brands', 		['removed', 'name']);
