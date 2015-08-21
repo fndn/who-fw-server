@@ -29,16 +29,25 @@ var valid_tokens = process.env.TOKENS.split(",");
 
 app.all('/*', function(req, res, next){
 
-	console.log('req.headers', req.headers );
-
-	var token = req.headers['x-auth-token'];
-	if( token == undefined ){
-		res.json({"status":"error", "msg":"access denied"});
-	}else if( valid_tokens.indexOf(token) == -1 ){
-		res.json({"status":"error", "msg":"unknown token"});
-	}else{
-		// ok!
+	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+	//console.log('remote_ip', remote_ip );
+	if( remote_ip.indexOf('127.0.0.1') > -1 ){
+		// bypass auth for localhost
+		console.log("bypassing auth for localhost");
 		next();
+	}else{
+
+		//console.log('req.headers', req.headers );
+
+		var token = req.headers['x-auth-token'];
+		if( token == undefined ){
+			res.send({"status":"error", "msg":"access denied"});
+		}else if( valid_tokens.indexOf(token) == -1 ){
+			res.send({"status":"error", "msg":"unknown token"});
+		}else{
+			// ok!
+			next();
+		}
 	}
 });
 
