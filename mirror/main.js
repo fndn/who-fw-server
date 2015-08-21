@@ -53,7 +53,7 @@ module.exports.init = function(_app, _databaseName){
 
 	dbname = _databaseName;
 
-	console.log( chalk.green("Starting Mirror") + " using "+ chalk.bgGreen( chalk.black(' '+ dbname +' ')) +", with "+ (use_strict_schema? chalk.cyan("strict") : chalk.red("loose")) +" schemas");
+	console.log( chalk.green("Starting Mirror") + " using "+ chalk.cyan(dbname) +", with "+ (use_strict_schema? chalk.bgGreen(chalk.black(" strict ")) :  chalk.bgRed(chalk.black(" loose "))) +" schemas");
 
 	mongoose.connect('mongodb://localhost/'+ dbname );
 	db = mongoose.connection;

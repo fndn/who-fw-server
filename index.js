@@ -1,6 +1,7 @@
-// mirror server example
 
-var port = 8080;
+require('dotenv').load();
+
+var port = process.env.PORT || 8080;
 
 var express = require('express');
 var chalk 	= require('chalk');
@@ -23,8 +24,23 @@ app.get('/version', function(req, res){
 	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
 
-//TODO: add auth middleware
-//app.all('/*', authmiddelware);
+// *Simple* auth
+var valid_tokens = process.env.TOKENS.split(",");
+
+app.all('/*', function(req, res, next){
+
+	console.log('req.headers', req.headers );
+
+	var token = req.headers['x-auth-token'];
+	if( token == undefined ){
+		res.json({"status":"error", "msg":"access denied"});
+	}else if( valid_tokens.indexOf(token) == -1 ){
+		res.json({"status":"error", "msg":"unknown token"});
+	}else{
+		// ok!
+		next();
+	}
+});
 
 // Connect mirror to express
 mirror.init( app, 'whofw-dev-000' );
@@ -33,7 +49,7 @@ mirror.init( app, 'whofw-dev-000' );
 var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "products", "registrations"];
 
 tables.forEach( function(t){
-	mirror.add(t, ['removed', 'name']); // is this enough?? no need for schema?
+	mirror.add(t, []); // using loose schemas
 })
 /*
 // Add model APIs
