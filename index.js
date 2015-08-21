@@ -24,6 +24,11 @@ app.get('/version', function(req, res){
 	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
 
+// Connect Mongo-Express
+app.use('/mex', mex_mw(mex_cnf));
+console.log( chalk.green("Starting Mongo-Express on /mex") );
+
+
 // *Simple* auth
 var valid_tokens = process.env.TOKENS.split(",");
 
@@ -51,6 +56,7 @@ app.all('/*', function(req, res, next){
 	}
 });
 
+
 // Connect mirror to express
 mirror.init( app, 'whofw-dev-000' );
 
@@ -59,7 +65,7 @@ var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "
 
 tables.forEach( function(t){
 	mirror.add(t, []); // using loose schemas
-})
+});
 /*
 // Add model APIs
 mirror.add('countries', 	['removed', 'name', 'countryCode']);
@@ -71,15 +77,6 @@ mirror.add('registrations',	['removed', 'name']);
 
 mirror.add('testing', 		['removed', 'name']);
 */
-
-// Connect Mongo-Express
-app.use('/mex', mex_mw(mex_cnf));
-console.log( chalk.green("Enabling Mongo-Express on /mex") );
-
-
-app.get('/*', function(req, res){
-	res.json({'status':'ok', 'code':'DEFAULT', 'message': pack.name +' v.'+ pack.version});
-});
 
 
 // Start serving
