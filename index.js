@@ -58,7 +58,7 @@ app.all('/*', function(req, res, next){
 
 
 // Connect mirror to express
-mirror.init( app, 'whofw-dev-000' );
+mirror.init( app, 'whofw-dev-100' );
 
 // Table list from Client's Datastore.Config:
 var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "products", "registrations"];

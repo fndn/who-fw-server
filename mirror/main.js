@@ -117,10 +117,12 @@ module.exports.init = function(_app, _databaseName){
 module.exports.add = function(_name, fields){
 	console.log( chalk.green("Mirror.add:", _name));
 
-	var name = _name;//.toLowerCase();
-	
-	var doc = {};
+	var name = _name;
+
+	models[name] = mongoose.model(name, mongoose.Schema({}, { strict: use_strict_schema }) );
+
 	/*
+	var doc = {};
 	fields.forEach( function(field){
 		doc[field] = ''
 	})
@@ -128,8 +130,9 @@ module.exports.add = function(_name, fields){
 
 	// add _timestamp prop to the schema. Used for both created_at and updated_at
 	doc['_timestamp'] = '';
-	*/
 	models[name] = mongoose.model(name, mongoose.Schema(doc, { strict: use_strict_schema }) );
+	*/
+	
 
 
 	// api: find all
@@ -143,7 +146,7 @@ module.exports.add = function(_name, fields){
 	// api: findOne by _id
 	app.get('/'+name +'/:id', function(req, res){
 		models[name].findById(req.params.id).exec(function(err, item) {
-			if (err) return res.apiError(err);
+			if (err) return res.apiError(err.message);
 			res.apiResponse({status:'ok', msg:item});
 		});
 	});
@@ -168,7 +171,11 @@ module.exports.add = function(_name, fields){
 		new models[name](req.body).save(function (err, item) {
 			if (err) return res.apiError(err);
 			res.apiResponse({status:'ok', msg:item});
+
+			models[name].find(function(err, items){console.log("all "+ name, items) });
 		});
+
+		
 	});
 
 	// api: update one by id AND diff
@@ -206,6 +213,8 @@ module.exports.add = function(_name, fields){
 			models[name].update({_id:req.params.id}, req.body, {new:true, upsert:false}, function (err, item) {
 				if (err) return res.apiError(err.message);
 				res.apiResponse({status:'ok', msg:item});
+
+				models[name].find(function(err, items){console.log("all "+ name, items) });
 			});
 		}
 	});
@@ -238,11 +247,11 @@ function _compute_dif(tablename, list, cb){
 		// compute $add and $put
 		len = items.length;
 		for(var i=0; i<len; i++){
-			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i].name) ){
+			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i]._doc.name) ){
 				// record does not exist on the client
 				var o = _strip_fromObject( items[i]._doc );
 				if( items[i].removed != 'Y' ){
-					//console.log("ADD", o);
+					console.log("ADD", o);
 					if( Object.keys(o).length > 0 ){
 						ret.add.push(o);
 					}
@@ -255,11 +264,6 @@ function _compute_dif(tablename, list, cb){
 
 				if( cr = _compareObjects(o, list) ){
 
-					//console.log("");
-					//console.log("Value Diff");
-					//console.log(" server-record:", o);
-					//console.log(" client-record:", cr);
-
 					if( items[i].removed != 'Y' ){
 						//console.log(" PUT:", o);
 						o._id = cr._id;
@@ -268,11 +272,14 @@ function _compute_dif(tablename, list, cb){
 				}
 			}
 		}
+		
 		// compute server add
 		len = list.length;
 		for(var i=0; i<len; i++){
+			//console.log('#3 items[i].name:', items[i]._doc.name, "items[i]:", items[i]._doc );
 			if( !_doesArrayContainObjectWithKeyValue(items, "name", list[i].name) ){
 				// record does not exist on the server
+				
 				var co = list[i];
 				delete co._id;
 				
@@ -285,10 +292,11 @@ function _compute_dif(tablename, list, cb){
 					co._timestamp = new Date(); // created_at
 					var doc = new models[tablename](co);
 					batch.push( doc );
-					console.log("SERVER-ADD", co, doc);	
+					console.log("SERVER-ADD", co);	
 				}
 			}			
 		}
+		
 		// compute $del (manually adding a $removed key to the server table)
 		len = list.length;
 		for(var i=0; i<len; i++){
@@ -320,9 +328,16 @@ function _compute_dif(tablename, list, cb){
 }
 
 function _doesArrayContainObjectWithKeyValue( arr, key, val ){
+	if( arr.length == 0 ) return;
+
+	var use_doc = Object.keys(arr[0]).indexOf('_doc') > -1;
+	
 	for(var i=0; i<arr.length; i++){
-		//console.log("comparing ", arr[i], key, val, ( arr[i][key] == val ) );
-		if( arr[i][key] == val ) return true;
+		if( use_doc ){
+			if( arr[i]._doc[key] == val ) return true;
+		}else{
+			if( arr[i][key] == val ) return true;
+		}
 	}
 	return false;
 }
