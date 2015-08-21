@@ -120,6 +120,7 @@ module.exports.add = function(_name, fields){
 	var name = _name;//.toLowerCase();
 	
 	var doc = {};
+	/*
 	fields.forEach( function(field){
 		doc[field] = ''
 	})
@@ -127,6 +128,7 @@ module.exports.add = function(_name, fields){
 
 	// add _timestamp prop to the schema. Used for both created_at and updated_at
 	doc['_timestamp'] = '';
+	*/
 	models[name] = mongoose.model(name, mongoose.Schema(doc, { strict: use_strict_schema }) );
 
 

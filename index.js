@@ -64,7 +64,7 @@ mirror.init( app, 'whofw-dev-000' );
 var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "products", "registrations"];
 
 tables.forEach( function(t){
-	mirror.add(t, {}); // using loose schemas
+	mirror.add(t, []); // using loose schemas
 });
 /*
 // Add model APIs
