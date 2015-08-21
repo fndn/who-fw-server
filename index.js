@@ -27,8 +27,15 @@ app.get('/version', function(req, res){
 //app.all('/*', authmiddelware);
 
 // Connect mirror to express
-mirror.init( app, 'who-fw-dev' );
+mirror.init( app, 'whofw-dev-000' );
 
+// Table list from Client's Datastore.Config:
+var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "products", "registrations"];
+
+tables.forEach( function(t){
+	mirror.add(t, ['removed', 'name']); // is this enough?? no need for schema?
+})
+/*
 // Add model APIs
 mirror.add('countries', 	['removed', 'name', 'countryCode']);
 mirror.add('locations',		['removed', 'name', 'neighbourhood', 'street', 'incomeType', 'countryId']);
@@ -38,7 +45,7 @@ mirror.add('brands', 		['removed', 'name']);
 mirror.add('registrations',	['removed', 'name']);
 
 mirror.add('testing', 		['removed', 'name']);
-
+*/
 
 // Connect Mongo-Express
 app.use('/mex', mex_mw(mex_cnf));

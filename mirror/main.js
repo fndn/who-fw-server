@@ -47,9 +47,14 @@ var app;
 var models = [];
 var dbname = '';
 
+var use_strict_schema = false;
+
 module.exports.init = function(_app, _databaseName){
 
 	dbname = _databaseName;
+
+	console.log( chalk.green("Starting Mirror") + " using "+ chalk.bgGreen( chalk.black(' '+ dbname +' ')) +", with "+ (use_strict_schema? chalk.cyan("strict") : chalk.red("loose")) +" schemas");
+
 	mongoose.connect('mongodb://localhost/'+ dbname );
 	db = mongoose.connection;
 	db.on('error', console.error.bind(console, 'connection error:'));
@@ -118,11 +123,11 @@ module.exports.add = function(_name, fields){
 	fields.forEach( function(field){
 		doc[field] = ''
 	})
-	console.log( chalk.grey('=> '), doc);
+	//console.log( chalk.grey('=> '), doc);
 
 	// add _timestamp prop to the schema. Used for both created_at and updated_at
 	doc['_timestamp'] = '';
-	models[name] = mongoose.model(name, mongoose.Schema(doc) );
+	models[name] = mongoose.model(name, mongoose.Schema(doc, { strict: use_strict_schema }) );
 
 
 	// api: find all
