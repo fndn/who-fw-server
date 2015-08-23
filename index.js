@@ -24,6 +24,7 @@ app.get('/version', function(req, res){
 	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
 
+
 // Connect Mongo-Express
 app.use('/mex', mex_mw(mex_cnf));
 console.log( chalk.green("Starting Mongo-Express on /mex") );

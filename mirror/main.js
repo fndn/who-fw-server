@@ -166,16 +166,39 @@ module.exports.add = function(_name, fields){
 
 	// api: create 
 	app.put('/'+name, function(req, res){
-		// only keys already defined in schema will be saved
-		req.body._timestamp = new Date(); // created_at
-		new models[name](req.body).save(function (err, item) {
+		// if using strict: only keys already defined in schema will be saved
+		// with loose, all fields will be saved.
+		
+
+		// make sure it does not already exist; prevent duplicates
+		var nobj = req.body;
+
+		models[name].findOne({'name':nobj.name}).exec(function (err, items){
+			
+			if( items != null ){
+				return res.apiResponse({status:'error', msg: "item '"+ nobj.name +"' already exists in table '"+ name +"'. Try an update instead?", data:items});
+			}else{
+				
+				nobj._timestamp = new Date(); // created_at
+				new models[name](nobj).save(function (err, item) {
+					if (err) return res.apiError(err);
+					res.apiResponse({status:'ok', msg:item});
+
+					models[name].find(function(err, items){console.log("all "+ name, items) });
+				});
+			}
+
+		});
+
+		/*
+		nobj._timestamp = new Date(); // created_at
+		new models[name](nobj).save(function (err, item) {
 			if (err) return res.apiError(err);
 			res.apiResponse({status:'ok', msg:item});
 
 			models[name].find(function(err, items){console.log("all "+ name, items) });
 		});
-
-		
+		*/		
 	});
 
 	// api: update one by id AND diff
