@@ -62,7 +62,7 @@ app.all('/*', function(req, res, next){
 mirror.init( app, 'whofw-dev-100' );
 
 // Table list from Client's Datastore.Config:
-var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "products", "registrations"];
+var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "ageGroups", "products", "registrations"];
 
 tables.forEach( function(t){
 	mirror.add(t, []); // using loose schemas
