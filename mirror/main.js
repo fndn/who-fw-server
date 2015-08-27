@@ -41,11 +41,13 @@ var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
 var util 		= require('util');
+var multer  	= require('multer');
 
 var db;
 var app;
 var models = [];
 var dbname = '';
+var uploader = null;
 
 var use_strict_schema = false;
 
@@ -68,6 +70,18 @@ module.exports.init = function(_app, _databaseName){
 	app.disable('x-powered-by');
 	app.set('etag', 'strong');
 
+	// configure multer
+	var storage = multer.diskStorage({
+		destination: function (req, file, cb) {
+			cb(null, 'uploads/')
+		},
+		filename: function (req, file, cb) {
+			console.log("storage.file:", file );
+			cb(null, Date.now() +'-'+ file.fieldname + '.png')
+		}
+	});
+	uploader = multer({ dest: 'uploads/', storage: storage });
+	//uploader = app.use(multer({ dest: 'uploads/' }))
 
 	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
@@ -102,12 +116,16 @@ module.exports.init = function(_app, _databaseName){
 		//TODO: use logger
 		console.log( req.method +' '+ req.url );
 
+		/*
+		NOTE: incompat with image uploader (requires multipart/form-data )
+		
 		// make sure put and post requests contain data
 		if( req.method == 'PUT' || req.method == 'POST' ){
 			if( Object.keys(req.body).length == 0 ){
 				return res.apiError(req.method +' '+ req.url +' : no urlencoded data received (0)');
 			}
 		}
+		*/
 
 		next();
 	});
@@ -169,9 +187,10 @@ module.exports.add = function(_name, fields){
 		// if using strict: only keys already defined in schema will be saved
 		// with loose, all fields will be saved.
 		
-
 		// make sure it does not already exist; prevent duplicates
 		var nobj = req.body;
+
+		console.log('req.body:', req.body);
 
 		models[name].findOne({'name':nobj.name}).exec(function (err, items){
 			
@@ -200,6 +219,26 @@ module.exports.add = function(_name, fields){
 		});
 		*/		
 	});
+
+	// testing image upload -------------- !
+	// note: multipart/form-data 
+	app.put('/'+name +'/upload',
+		uploader.fields([
+			{name: 'front', maxCount: 1},
+			{name: 'back', maxCount: 1},
+			{name: 'side1', maxCount: 1},
+			{name: 'side2', maxCount: 1}
+		]),
+		function (req, res, next) {
+			// req.file is the `avatar` file
+			// req.body will hold the text fields, if there were any
+			console.log("files:", JSON.stringify(req.files));
+			console.log("body:", JSON.stringify(req.body));
+
+		res.apiResponse({status:'ok', msg:req.body});
+	});
+
+
 
 	// api: update one by id AND diff
 	app.post('/'+name +'/:id', function(req, res){

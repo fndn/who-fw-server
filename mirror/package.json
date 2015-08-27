@@ -12,6 +12,7 @@
     "body-parser": "^1.13.3",
     "chalk": "^1.1.0",
     "moment": "^2.10.6",
-    "mongoose": "^4.1.2"
+    "mongoose": "^4.1.2",
+    "multer": "^1.0.1"
   }
 }

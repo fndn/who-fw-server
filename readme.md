@@ -22,3 +22,8 @@ Call `mirror.add(collectionName, [fieldNames]);` to create
 - Add utility functions ala `GET /collection/gte/{date}`, ignore if-exists, consolidate, next-id etc.
 - Add Auth middleware
 - Add Image store (and extract GPS data if stamped on images)
+
+
+## tips
+
+mongo <dbname> --eval "db.dropDatabase()"
