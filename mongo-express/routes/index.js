@@ -21,6 +21,8 @@ var routes = function(config) {
   exp.deleteDocument = document(config).deleteDocument;
   exp.addDocument = document(config).addDocument;
 
+  exp.removeDocument = document(config).removeDocument; //js
+
 
   //Homepage route
   exp.index = function(req, res) {

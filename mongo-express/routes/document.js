@@ -14,6 +14,8 @@ var routes = function(config) {
   };
 
 
+
+
   exp.addDocument = function(req, res, next) {
     var doc = req.body.document;
 
@@ -44,6 +46,38 @@ var routes = function(config) {
     });
   };
 
+
+  // js
+ exp.removeDocument = function(req, res, next) {
+ 
+    
+    var doc = req.document;
+
+    console.log('Marking doc as removed:', req.document._id);
+
+    if (doc == undefined || doc.length == 0) {
+      req.session.error = "Invalid document!";
+      return res.redirect('back');
+    }
+
+    doc['removed'] = 'y';
+    var crits = {'_id': req.document._id };
+
+    //console.log('crits', crits);
+    //console.log('doc', doc);
+
+    req.collection.update(crits, doc, {safe: true}, function(err, result) {
+      if (err) {
+        //document was not saved
+        req.session.error = "Something went wrong: " + err;
+        console.error(err);
+        return res.redirect('back');
+      }
+
+      req.session.success = "Document updated!";
+      res.redirect(res.locals.baseHref + 'db/' + req.dbName + '/' + req.collectionName);
+    });
+  };
 
   exp.updateDocument = function(req, res, next) {
     var doc = req.body.document;

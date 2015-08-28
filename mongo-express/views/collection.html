@@ -181,13 +181,21 @@ function loadDocument(id) {
   </script>
 </div>
 <div class="span1">
-  <br /><br />
+  <br />
   <form method="POST" action="{{ baseHref }}db/{{ dbName }}/{{ collectionName }}/{{ docs[loop.index0]._id|to_string|url_encode }}">
-  <input type="hidden" name="_method" value="delete">
-  <button type="submit" class="btn btn-danger btn-mini">
-  <i class="icon-remove icon-white"></i>
-  </button>
+    <input type="hidden" name="_method" value="delete">
+    <button type="submit" class="btn btn-danger btn-mini">
+      <i class="icon-remove icon-white"></i>
+    </button>
   </form>
+
+  <form method="POST" action="{{ baseHref }}db/{{ dbName }}/{{ collectionName }}/{{ docs[loop.index0]._id|to_string|url_encode }}/markremove">
+    <input type="hidden" name="_method" value="get">
+    <button type="submit" class="btn btn-warning btn-mini">
+      <i class="icon-remove icon-white"></i>
+    </button>
+  </form>
+
 </div>
 </div>
 {% endfor %}

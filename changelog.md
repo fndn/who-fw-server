@@ -1,4 +1,9 @@
 
+## 0.0.5 - 2015.08.28
+
+- added Mark as Removed
+
+
 ## 0.0.4 - 2015.08.21
 
 - added access tokens

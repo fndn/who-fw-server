@@ -160,6 +160,8 @@ var router = function(config) {
 
   appRouter.get('/db/:database/export/:collection', mongoMiddleware, routes(config).exportCollection);
 
+  appRouter.get('/db/:database/:collection/:document/markremove', mongoMiddleware, routes(config).removeDocument); //js
+  
   appRouter.get('/db/:database/:collection/:document', mongoMiddleware, routes(config).viewDocument);
   appRouter.put('/db/:database/:collection/:document', mongoMiddleware, routes(config).updateDocument);
   appRouter.delete('/db/:database/:collection/:document', mongoMiddleware, routes(config).deleteDocument);
