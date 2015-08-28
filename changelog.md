@@ -1,8 +1,11 @@
+## 0.0.6 - 2015.08.28
+
+- rewrote diff algorithm
+
 
 ## 0.0.5 - 2015.08.28
 
 - added Mark as Removed to /mex
-- rewrote diff algorithm
 
 
 ## 0.0.4 - 2015.08.21
