@@ -246,7 +246,7 @@ module.exports.add = function(_name, fields){
 		if( req.params.id == 'diff' ){
 			//Note: The diff function only works if there is a $name field on the objects
 			var cdata = req.body.list;
-			console.log("computing diff on table '"+ name +"'\n", cdata );
+			console.log("computing diff on table '"+ name); //, cdata );
 			_compute_dif(name, cdata, function(err, result){
 				if (err) return res.apiError(err);
 				res.apiResponse({status:'ok', msg:result});
@@ -304,15 +304,83 @@ function _compute_dif(tablename, list, cb){
 	
 	models[tablename].find( function(err, items) {
 
+		//console.log('## items', items);
+
 		var ret = {table:tablename, add:[], put:[], del:[]};
 		var i, len, o, cr;
+
+
+		// Diff against server to find items in the submitted list that
+		// either needs to be ADDED to the server, or
+		// REMOVED from the client.
+		//
+		// So: Check each item in the submitted list to see if it exists on server
+		// if it does, check if is "removed" (on the server) and send it to the client as DELETE 
+		// if not, add it
+		len = list.length;
+		for(var i=0; i<len; i++){
+			var so = _findObjectByKeyValue(items, "name", list[i].name);
+			if( so ){
+				// record exist on server. Is it marked as Removed?
+				if( so.removed == 'y' ){
+					var o = _strip_fromObject( so );
+					o._id = list[i]._id;
+					//console.log(so.name +" is marked as removed!", o);
+					ret.del.push(o);
+				}
+			}else{
+
+				// record does not exist on the server
+				var co = JSON.parse( JSON.stringify(list[i]));
+				co._timestamp = new Date(); // created_at
+				delete co._id;				
+				var doc = new models[tablename](co);
+				batch.push( doc );
+			}
+		};
+
+		// Diff agains server to find items that is missing from the submitted list
+		// if there is a name-match send the record to the client as a PUT
+		// if there is no math, send it as ADD
+		len = items.length;
+		for(var i=0; i<len; i++){
+			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i]._doc.name) ){
+				var o = _strip_fromObject( items[i]._doc );
+				//console.log( items[i]._doc.name + " DOES NOT exist on the client.", items[i]._doc, o );
+				if( items[i]._doc.removed != 'y' ){
+					//console.log('ADD to CLIENT', o);
+					ret.add.push(o);
+				}
+			}else{
+				//console.log( items[i]._doc.name + " EXISTS on the client.", items[i]._doc );
+
+				var o = _strip_fromObject( items[i]._doc );
+
+				if( cr = _compareObjects(o, list) ){
+
+					if( items[i].removed != 'y' ){
+						o._id = cr._id;
+						//console.log("PUT to CLIENT", o);
+						ret.put.push(o);
+					}
+				}
+
+			}
+		};
+
+		//console.log('##--------- final ret:', ret);
+		//console.log('##--------- final batch:', batch);
+		
+
+		/*
 		// compute $add and $put
 		len = items.length;
 		for(var i=0; i<len; i++){
 			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i]._doc.name) ){
 				// record does not exist on the client
 				var o = _strip_fromObject( items[i]._doc );
-				if( items[i].removed != 'Y' ){
+
+				if( items[i].removed != 'y' ){
 					console.log("ADD", o);
 					if( Object.keys(o).length > 0 ){
 						ret.add.push(o);
@@ -326,7 +394,7 @@ function _compute_dif(tablename, list, cb){
 
 				if( cr = _compareObjects(o, list) ){
 
-					if( items[i].removed != 'Y' ){
+					if( items[i].removed != 'y' ){
 						//console.log(" PUT:", o);
 						o._id = cr._id;
 						ret.put.push(o);
@@ -334,7 +402,9 @@ function _compute_dif(tablename, list, cb){
 				}
 			}
 		}
-		
+		*/
+
+		/*
 		// compute server add
 		len = list.length;
 		for(var i=0; i<len; i++){
@@ -358,31 +428,47 @@ function _compute_dif(tablename, list, cb){
 				}
 			}			
 		}
-		
+		*/
+
+		/*
 		// compute $del (manually adding a $removed key to the server table)
 		len = list.length;
 		for(var i=0; i<len; i++){
 			if( so = _findObjectByKeyValue(items, "name", list[i].name) ){
 				// record exist on the server but not (or are different) on the client
+				console.log('######### 1 DEL checking REMOVED: ', so.removed, so, list[i]);
 				// only handle those that does not exist
 				if( _findObjectByKeyValue(ret.put, "name", list[i].name)){
 					// record has already been added to put (for update)
 				}else{
 					// only send if its not marked as removed on the server
-					if( so.removed == 'Y'){
+
+					console.log('######### 2 DEL checking REMOVED: ', so.removed, so, list[i]);
+
+					if( so.removed == 'y'){
 						ret.del.push(list[i]);
 					}
 				}
-			}			
-		}		
+			}else{
+				// new
+				//console.log('######### 3 DEL checking REMOVED: ', so.removed, so, list[i]);
+				//var _o = _findObjectByKeyValue(items, "name", list[i].name);
+				//console.log('   3 DEL checking REMOVED: ', _o, items );
+				
+			}		
+		}
+		*/	
 	
 		cb(null, ret);
 
 		if( batch.length ){
 			console.log( "Adding to database");
 			models[tablename].create(batch, function (err, item) {
-				if (err) console.log("Error: Could not create", tablename, batch);
-				console.log("Added batch to", tablename, batch);
+				if (err){
+					console.log("Error: Could not create", tablename, batch);
+				}else{
+					console.log("Added record to", tablename, batch);
+				}
 			});
 		}
 
@@ -422,8 +508,17 @@ function _compareObjects(o1, arr){
 }
 
 function _findObjectByKeyValue( arr, key, val ){
+
+	var use_doc = Object.keys(arr[0]).indexOf('_doc') > -1;
+
 	for(var i=0; i<arr.length; i++){
-		if( arr[i][key] == val ) return arr[i];
+		if( use_doc ){
+			if( arr[i]._doc[key] == val ) return arr[i]._doc;
+		}else{
+			if( arr[i][key] == val ) return arr[i];
+		}
+
+		//if( arr[i][key] == val ) return arr[i];
 	}
 	return false;
 }
