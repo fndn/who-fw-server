@@ -41,7 +41,9 @@ var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
 var util 		= require('util');
-var multer  	= require('multer');
+var fs 			= require('fs');
+var multiparty  = require('multiparty');
+var sharp 		= require('sharp');
 
 var db;
 var app;
@@ -69,19 +71,6 @@ module.exports.init = function(_app, _databaseName){
 	// set express 'sensible defaults' (optional)
 	app.disable('x-powered-by');
 	app.set('etag', 'strong');
-
-	// configure multer
-	var storage = multer.diskStorage({
-		destination: function (req, file, cb) {
-			cb(null, 'uploads/')
-		},
-		filename: function (req, file, cb) {
-			console.log("storage.file:", file );
-			cb(null, Date.now() +'-'+ file.fieldname + '.png')
-		}
-	});
-	uploader = multer({ dest: 'uploads/', storage: storage });
-	//uploader = app.use(multer({ dest: 'uploads/' }))
 
 	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
@@ -221,24 +210,77 @@ module.exports.add = function(_name, fields){
 	});
 
 	// testing image upload -------------- !
-	// note: multipart/form-data 
-	app.put('/'+name +'/upload',
-		uploader.fields([
-			{name: 'front', maxCount: 1},
-			{name: 'back', maxCount: 1},
-			{name: 'side1', maxCount: 1},
-			{name: 'side2', maxCount: 1}
-		]),
-		function (req, res, next) {
-			// req.file is the `avatar` file
-			// req.body will hold the text fields, if there were any
-			console.log("files:", JSON.stringify(req.files));
-			console.log("body:", JSON.stringify(req.body));
+	//app.put('/'+name +'/upload', uploader.fields([{name: 'front', maxCount: 1}]), function (req, res, next) {
+	app.put('/'+name +'/upload', function (req, res, next) {
 
-		res.apiResponse({status:'ok', msg:req.body});
+		var form = new multiparty.Form();//{autoFields:true, uploadDir:'./uploads2'});
+
+		form.parse(req, function(err, fields, files) {
+			//console.log("multiparty fields:", util.inspect(fields));
+			//console.log("multiparty files:", util.inspect(files, {depth:null}) );
+
+			console.log('processing file uploads');
+			var okfiles = [];
+			var id = fields.productId[0];
+			Object.keys(files).forEach( function(f){
+				var o = files[f][0];
+				//console.log(files[f][0]);
+
+				var filename = id +'-'+ o.originalFilename;
+				fs.renameSync(o.path, './images-org/'+filename);
+				console.log('Saved Original to ./images-org/'+filename);
+				okfiles.push(o.originalFilename);
+
+				// Generate sizes
+
+				// todo: move to a GET request?
+
+				var image = sharp('./images-org/'+filename);
+				image.metadata(function(err, metadata){
+					if( err ) return;
+					if( metadata.height > metadata.width ){
+
+						// Portrait orientation
+						image.resize(1080, 1920).toFile('./images-lrg/'+filename, function(err) {
+							console.log('Saved 1080x1920 version to ./images-lrg/'+filename);
+						});
+						image.resize(720, 1280).toFile('./images-mid/'+filename, function(err) {
+							console.log('Saved 720x1280 version to ./images-mid/'+filename);
+						});
+						image.resize(360, 640).toFile('./images-sml/'+filename, function(err) {
+							console.log('Saved 360x640 version to ./images-sml/'+filename);
+						});
+
+					}else{
+
+						// Landscape orientation
+						image.resize(1920, 1080).toFile('./images-lrg/'+filename, function(err) {
+							console.log('Saved 1920x1080 version to ./images-lrg/'+filename);
+						});
+						image.resize(1280, 720).toFile('./images-mid/'+filename, function(err) {
+							console.log('Saved 1280x720 version to ./images-mid/'+filename);
+						});
+						image.resize(640, 360).toFile('./images-sml/'+filename, function(err) {
+							console.log('Saved 640x360 version to ./images-sml/'+filename);
+						});
+					}
+
+					image.resize(240, 240).toFile('./images-smlsq/'+filename, function(err) {
+						console.log('Saved 240x240 version to ./images-smlsq/'+filename);
+					});
+					image.resize(120, 120).toFile('./images-thumbsq/'+filename, function(err) {
+						console.log('Saved 120x120 version to ./images-thumbsq/'+filename);
+					});
+				})
+
+			});
+
+			console.log('responding...');
+			res.apiResponse({status:'ok', msg:'upload_confirmed', id:id, files:okfiles});
+
+		});
+		//res.apiResponse({status:'ok', msg:req.body});
 	});
-
-
 
 	// api: update one by id AND diff
 	app.post('/'+name +'/:id', function(req, res){

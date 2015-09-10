@@ -15,7 +15,7 @@ apt-get -q -y update
 
 # Install
 echo "Installing binary stack..."
-apt-get -q -y install build-essential nodejs mongodb-10gen git
+apt-get -q -y install build-essential nodejs mongodb-10gen git pkg-config
 
 echo "Installing javascript stack..."
 npm install forever -g
@@ -23,6 +23,8 @@ npm install pm2 -g
 pm2 updatePM2
 pm2 startup ubuntu
 
+echo "Installing sharp (image resizer)"
+curl -s https://raw.githubusercontent.com/lovell/sharp/master/preinstall.sh | bash -
 
 
 # Setup Server Application
