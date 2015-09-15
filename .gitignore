@@ -2,5 +2,7 @@
 node_modules
 node_modules/*
 npm-debug.log
-images*
+imagecache/*
+images-org/*
+uploads
 .env

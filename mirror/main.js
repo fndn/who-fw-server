@@ -42,8 +42,10 @@ var moment 		= require('moment');
 var chalk 		= require('chalk');
 var util 		= require('util');
 var fs 			= require('fs');
+var path 		= require('path');
 var multiparty  = require('multiparty');
 var sharp 		= require('sharp');
+var mime 		= require('mime');
 
 var db;
 var app;
@@ -158,6 +160,73 @@ module.exports.add = function(_name, fields){
 		});
 	});
 
+
+	// api: get image (with caching resizer)
+	app.get('/'+ name +'/:id/i/:size/:tag', function(req, res){ 
+		
+		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
+		if( sizes.length < 2 ){
+			res.send('Error: Illegal size provided (max size on any dimension: 16383px)', 404);
+			return;
+		}
+		
+		console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
+
+		var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpg';
+		var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpg';
+
+		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
+		
+		fs.access(filename_chc, fs.R_OK, function (err) {
+			if( !err ){
+				sendFile(res, filename_chc );				
+			}else{
+				// image does not exist in cache
+				fs.access(filename_org, fs.R_OK, function (err) {
+					if( err ){
+						// original does not exist
+						res.send('Error: original does not exist', 404);
+					}else{
+						// create requested size
+						sharp( filename_org )
+							.resize(sizes[0], sizes[1])
+							.toFile(filename_chc, function(err) {
+								if( err ){
+									// could not create the image
+									res.send('Error: could not create the image', 404);
+								}else{
+									sendFile(res, filename_chc );
+								}
+							}
+						);
+					}
+				});
+			}
+		});		
+	});
+
+
+	// helper for the get::image endpoint:
+	function sendFile(res, _filename){
+		var filename = path.normalize( __dirname +'/.'+ _filename );
+		console.log("filename normalized:", filename );
+		var options = {
+			dotfiles: 'deny',
+			headers: {
+				'x-timestamp': Date.now(),
+				'x-sent': true
+			}
+		};
+		res.sendFile(filename, options, function (err) {
+			if(err){
+				console.log(err);
+				res.status(err.status).end();
+			}else{
+				console.log('Sent:', filename);
+			}
+		});
+	}
+
 	// api: find all newer than
 	app.get('/'+name +'/gte/:date', function(req, res){
 		var startDate = new Date(req.params.date);
@@ -209,7 +278,7 @@ module.exports.add = function(_name, fields){
 		*/		
 	});
 
-	// testing image upload -------------- !
+
 	//app.put('/'+name +'/upload', uploader.fields([{name: 'front', maxCount: 1}]), function (req, res, next) {
 	app.put('/'+name +'/upload', function (req, res, next) {
 
@@ -224,55 +293,16 @@ module.exports.add = function(_name, fields){
 			var id = fields.productId[0];
 			Object.keys(files).forEach( function(f){
 				var o = files[f][0];
-				//console.log(files[f][0]);
+				//console.log(o.headers['content-type'], mime.extension('image/jpeg'), mime.extension(o.headers['content-type']) );
+				var ext = mime.extension(o.headers['content-type']);
+				console.log('ext:', ext);
 
-				var filename = id +'-'+ o.originalFilename;
+				var filename = id +'-'+ o.originalFilename + '.'+ ext;
 				fs.renameSync(o.path, './images-org/'+filename);
 				console.log('Saved Original to ./images-org/'+filename);
 				okfiles.push(o.originalFilename);
 
-				// Generate sizes
-
-				// todo: move to a GET request?
-
-				var image = sharp('./images-org/'+filename);
-				image.metadata(function(err, metadata){
-					if( err ) return;
-					if( metadata.height > metadata.width ){
-
-						// Portrait orientation
-						image.resize(1080, 1920).toFile('./images-lrg/'+filename, function(err) {
-							console.log('Saved 1080x1920 version to ./images-lrg/'+filename);
-						});
-						image.resize(720, 1280).toFile('./images-mid/'+filename, function(err) {
-							console.log('Saved 720x1280 version to ./images-mid/'+filename);
-						});
-						image.resize(360, 640).toFile('./images-sml/'+filename, function(err) {
-							console.log('Saved 360x640 version to ./images-sml/'+filename);
-						});
-
-					}else{
-
-						// Landscape orientation
-						image.resize(1920, 1080).toFile('./images-lrg/'+filename, function(err) {
-							console.log('Saved 1920x1080 version to ./images-lrg/'+filename);
-						});
-						image.resize(1280, 720).toFile('./images-mid/'+filename, function(err) {
-							console.log('Saved 1280x720 version to ./images-mid/'+filename);
-						});
-						image.resize(640, 360).toFile('./images-sml/'+filename, function(err) {
-							console.log('Saved 640x360 version to ./images-sml/'+filename);
-						});
-					}
-
-					image.resize(240, 240).toFile('./images-smlsq/'+filename, function(err) {
-						console.log('Saved 240x240 version to ./images-smlsq/'+filename);
-					});
-					image.resize(120, 120).toFile('./images-thumbsq/'+filename, function(err) {
-						console.log('Saved 120x120 version to ./images-thumbsq/'+filename);
-					});
-				})
-
+				// Let the caching-resizer generate scaled copies on-demand instead of eagerly doing it on upload
 			});
 
 			console.log('responding...');

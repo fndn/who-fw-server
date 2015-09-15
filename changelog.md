@@ -1,7 +1,8 @@
-## 0.0.7 - 2015.09.10
+## 0.0.7 - 2015.09.14
 
-- image uploads
-- image resize
+- Added image upload
+- Added image resize (with cache)
+- Added mime type resolver
 
 ## 0.0.6 - 2015.08.28
 
