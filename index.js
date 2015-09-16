@@ -46,8 +46,8 @@ app.all('/*', function(req, res, next){
 		//console.log('req.headers', req.headers );
 
 		var token = req.headers['x-auth-token'];
-		console.log('token', token );
-		
+		console.log('token', token, req.headers );
+
 		if( token == undefined ){
 			res.send({"status":"error", "msg":"access denied"});
 		}else if( valid_tokens.indexOf(token) == -1 ){
