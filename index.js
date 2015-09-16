@@ -35,32 +35,30 @@ var valid_tokens = process.env.TOKENS.split(",");
 
 app.all('/*', function(req, res, next){
 
-	console.log('req.path', req.path);
-	if( req.path.split("/")[1] === 'pub' ){
-		console.log("bypassing auth for public endpoints");
-		return next();
-	}
+	var reqpath = ''+ req.path;
+	console.log('reqpath', reqpath);
 
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	console.log('remote_ip', remote_ip );
-	if( remote_ip.indexOf('127.0.0.1') > -1 || remote_ip.indexOf('169.254.') > -1 ){
-		// bypass auth for localhost
+
+	var token = req.headers['x-auth-token'];
+	console.log('token', token );
+	//console.log('req.headers', req.headers );
+
+	if( reqpath.split("/")[1] === 'pub' ){
+		console.log("bypassing auth for public endpoints");
+		next();
+
+	}else if( remote_ip.indexOf('127.0.0.1') > -1 || remote_ip.indexOf('169.254.') > -1 ){
 		console.log("bypassing auth for localhost");
-		return next();
+		next();
+	
+	}else if( valid_tokens.indexOf(token) > -1 ){
+		console.log("auth by token");
+		next();
+
 	}else{
-
-		//console.log('req.headers', req.headers );
-
-		var token = req.headers['x-auth-token'];
-		//console.log('token', token );
-		if( token == undefined ){
-			res.send({"status":"error", "msg":"access denied"});
-		}else if( valid_tokens.indexOf(token) == -1 ){
-			res.send({"status":"error", "msg":"unknown token"});
-		}else{
-			// ok!
-			return next();
-		}
+		res.send({"status":"error", "msg":"access denied"});
 	}
 });
 
