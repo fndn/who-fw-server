@@ -36,11 +36,10 @@ var valid_tokens = process.env.TOKENS.split(",");
 app.all('/*', function(req, res, next){
 
 	var reqpath = ''+ req.path;
-	console.log('reqpath:', reqpath);
-
+	//console.log('reqpath:', reqpath);
 
 	if (reqpath === '/favicon.ico') {
-		console.log('favicon requested');
+		//console.log('favicon requested');
 		res.writeHead(200, {'Content-Type': 'image/x-icon'} );
 		res.end();
 		return;
