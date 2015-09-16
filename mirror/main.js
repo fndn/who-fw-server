@@ -32,6 +32,8 @@ gte function:
 diff function:
 - The objects *must* have a "name" field
 
+start any endpoint with "/pub" to allow un-authenticated access
+
 **/
 
 
@@ -164,6 +166,7 @@ module.exports.add = function(_name, fields){
 
 
 	// api: get image (with caching resizer)
+	/// http://127.0.0.1:8090/pub/images/_999/i/600x400/back
 	app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
 		
 		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
@@ -176,7 +179,8 @@ module.exports.add = function(_name, fields){
 
 		var filename_chc = dir_imagecache +'/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
 		var filename_org = dir_uploads    +'/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
-		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
+		console.log("filename cache:", filename_chc );
+		console.log("filename orig: ", filename_org );
 
 		//var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
 		//var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
@@ -184,6 +188,7 @@ module.exports.add = function(_name, fields){
 		
 		if( fs.existsSync(filename_chc) ){
 			// image exist in cache
+			console.log("⁙ img: serving cached");
 			sendFile(res, filename_chc );				
 		}else{
 			
@@ -196,6 +201,7 @@ module.exports.add = function(_name, fields){
 							// could not create the image
 							res.apiResponse({status:'error', msg:'could not create the image'}, 404);
 						}else{
+							console.log("* img: serving resized");
 							sendFile(res, filename_chc );
 						}
 					}
@@ -209,9 +215,7 @@ module.exports.add = function(_name, fields){
 
 
 	// helper for the get::image endpoint:
-	function sendFile(res, _filename){
-		var filename = path.normalize( __dirname +'/.'+ _filename );
-		console.log("filename normalized:", filename );
+	function sendFile(res, filename){
 		var options = {
 			dotfiles: 'deny',
 			headers: {

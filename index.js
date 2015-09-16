@@ -35,11 +35,11 @@ var valid_tokens = process.env.TOKENS.split(",");
 
 app.all('/*', function(req, res, next){
 
-	var reqpath = ''+ req.path;
-	//console.log('reqpath:', reqpath);
+	// separate requests in the log
+	console.log(" ");
 
-	if (reqpath === '/favicon.ico') {
-		//console.log('favicon requested');
+	// ignore favicon
+	if (req.path === '/favicon.ico') {
 		res.writeHead(200, {'Content-Type': 'image/x-icon'} );
 		res.end();
 		return;
@@ -53,20 +53,20 @@ app.all('/*', function(req, res, next){
 	//console.log('token:', token );
 	//console.log('req.headers', req.headers );
 
-	if( reqpath.split("/")[1] === 'pub' ){
-		console.log("bypassing auth for public endpoints");
+	if( req.path.split("/")[1] === 'pub' ){
+		console.log("⌥ auth: bypassing auth for public endpoints");
 		next();
 
 	}else if( remote_ip.indexOf('127.0.0.1') > -1 || remote_ip.indexOf('169.254.') > -1 ){
-		console.log("bypassing auth for localhost");
+		console.log("⌥ auth: bypassing auth for localhost");
 		next();
 	
 	}else if( valid_tokens.indexOf(token) > -1 ){
-		console.log("auth by token");
+		console.log("⌥ auth: access allowed by token");
 		next();
 
 	}else{
-		console.log("access denied");
+		console.log("⌥ auth: access denied");
 		res.send({"status":"error", "msg":"access denied"});
 	}
 });
