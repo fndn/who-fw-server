@@ -162,8 +162,10 @@ module.exports.add = function(_name, fields){
 
 
 	// api: get image (with caching resizer)
-	app.get('/'+ name +'/:id/i/:size/:tag', function(req, res){ 
+	app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
 		
+		console.log('**** here ****');
+
 		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
 		if( sizes.length < 2 ){
 			res.send('Error: Illegal size provided (max size on any dimension: 16383px)', 404);
@@ -172,8 +174,8 @@ module.exports.add = function(_name, fields){
 		
 		console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
 
-		var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpg';
-		var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpg';
+		var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
+		var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
 
 		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
 		

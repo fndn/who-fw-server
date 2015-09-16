@@ -36,6 +36,10 @@ var valid_tokens = process.env.TOKENS.split(",");
 app.all('/*', function(req, res, next){
 
 	console.log('req.path', req.path);
+	if( req.path.split("/")[1] === 'pub' ){
+		console.log("bypassing auth for public endpoints");
+		next();
+	}
 
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	console.log('remote_ip', remote_ip );
@@ -49,7 +53,6 @@ app.all('/*', function(req, res, next){
 
 		var token = req.headers['x-auth-token'];
 		//console.log('token', token );
-
 		if( token == undefined ){
 			res.send({"status":"error", "msg":"access denied"});
 		}else if( valid_tokens.indexOf(token) == -1 ){
