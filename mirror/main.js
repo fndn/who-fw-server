@@ -164,8 +164,6 @@ module.exports.add = function(_name, fields){
 	// api: get image (with caching resizer)
 	app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
 		
-		console.log('**** here ****');
-
 		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
 		if( sizes.length < 2 ){
 			res.send('Error: Illegal size provided (max size on any dimension: 16383px)', 404);

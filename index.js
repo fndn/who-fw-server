@@ -38,7 +38,7 @@ app.all('/*', function(req, res, next){
 	console.log('req.path', req.path);
 	if( req.path.split("/")[1] === 'pub' ){
 		console.log("bypassing auth for public endpoints");
-		next();
+		return next();
 	}
 
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -46,7 +46,7 @@ app.all('/*', function(req, res, next){
 	if( remote_ip.indexOf('127.0.0.1') > -1 || remote_ip.indexOf('169.254.') > -1 ){
 		// bypass auth for localhost
 		console.log("bypassing auth for localhost");
-		next();
+		return next();
 	}else{
 
 		//console.log('req.headers', req.headers );
@@ -59,7 +59,7 @@ app.all('/*', function(req, res, next){
 			res.send({"status":"error", "msg":"unknown token"});
 		}else{
 			// ok!
-			next();
+			return next();
 		}
 	}
 });
