@@ -36,13 +36,13 @@ var valid_tokens = process.env.TOKENS.split(",");
 app.all('/*', function(req, res, next){
 
 	var reqpath = ''+ req.path;
-	console.log('reqpath', reqpath);
+	console.log('reqpath:', reqpath);
 
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-	console.log('remote_ip', remote_ip );
+	console.log('remote_ip:', remote_ip );
 
 	var token = req.headers['x-auth-token'];
-	console.log('token', token );
+	console.log('token:', token );
 	//console.log('req.headers', req.headers );
 
 	if( reqpath.split("/")[1] === 'pub' ){
@@ -58,6 +58,7 @@ app.all('/*', function(req, res, next){
 		next();
 
 	}else{
+		console.log("access denied");
 		res.send({"status":"error", "msg":"access denied"});
 	}
 });

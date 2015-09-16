@@ -1,11 +1,8 @@
 {
 	"name": "mirror-server",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"description": "",
 	"main": "index.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
 	"author": "",
 	"license": "MIT",
 	"dependencies": {

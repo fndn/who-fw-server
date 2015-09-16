@@ -41,7 +41,7 @@ var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
 var chalk 		= require('chalk');
 var util 		= require('util');
-var fs 			= require('fs');
+var fs 			= require('fs-extra');
 var path 		= require('path');
 var multiparty  = require('multiparty');
 var sharp 		= require('sharp');
@@ -86,14 +86,12 @@ module.exports.init = function(_app, _databaseName){
 			res.json({'status':'error', 'msg': req.method +' '+ req.url +' : NotFound', 'code':404 });
 		};
 
-		res.apiResponse = function(data) {
-			if (req.query.callback) {
-				res.jsonp(data);
-			} else {
-				//console.log( chalk.grey( util.inspect(data, false,null)) );
-				console.log( util.inspect(data, false,null,true) );
-				res.json(data);
-			}
+		res.apiResponse = function(data, statusCode) {
+			console.log( util.inspect(data, false,null,true), (statusCode || 200) );
+
+			if( statusCode ) res.status(statusCode);
+			
+			res.json(data);
 		};
 
 		res.apiError = function(msg) {
@@ -143,6 +141,10 @@ module.exports.add = function(_name, fields){
 	*/
 	
 
+	// Ensure cache-directories for this model exists (uploads dir is created in the /upload function below)
+	var dir_imagecache 	= path.normalize( __dirname +'/../img-cache/'+ name);
+	var dir_uploads 	= path.normalize( __dirname +'/../img-origs/'+ name);
+	fs.mkdirsSync(dir_imagecache);
 
 	// api: find all
 	app.get('/'+name, function(req, res){
@@ -166,16 +168,19 @@ module.exports.add = function(_name, fields){
 		
 		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
 		if( sizes.length < 2 ){
-			res.send('Error: Illegal size provided (max size on any dimension: 16383px)', 404);
+			res.apiResponse({status:'error', msg:'Illegal size provided (max size on any dimension: 16383px)'}, 500);
 			return;
 		}
 		
-		console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
+		//console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
 
-		var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
-		var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
-
+		var filename_chc = dir_imagecache +'/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
+		var filename_org = dir_uploads    +'/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
 		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
+
+		//var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
+		//var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
+		//console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
 		
 		if( fs.existsSync(filename_chc) ){
 			// image exist in cache
@@ -189,7 +194,7 @@ module.exports.add = function(_name, fields){
 					.toFile(filename_chc, function(err) {
 						if( err ){
 							// could not create the image
-							res.send('Error: could not create the image', 404);
+							res.apiResponse({status:'error', msg:'could not create the image'}, 404);
 						}else{
 							sendFile(res, filename_chc );
 						}
@@ -197,40 +202,9 @@ module.exports.add = function(_name, fields){
 				);
 			}else{
 				// original does not exist
-				res.send('Error: original does not exist', 404);
+				res.apiResponse({status:'error', msg:'original does not exist'}, 404);
 			}
 		}
-
-		/// Node 4?
-		/*
-		fs.access(filename_chc, fs.R_OK, function (err) {
-			if( !err ){
-				sendFile(res, filename_chc );				
-			}else{
-				// image does not exist in cache
-				fs.access(filename_org, fs.R_OK, function (err) {
-					if( err ){
-						// original does not exist
-						res.send('Error: original does not exist', 404);
-					}else{
-						// create requested size
-						sharp( filename_org )
-							.resize(sizes[0], sizes[1])
-							.toFile(filename_chc, function(err) {
-								if( err ){
-									// could not create the image
-									res.send('Error: could not create the image', 404);
-								}else{
-									sendFile(res, filename_chc );
-								}
-							}
-						);
-					}
-				});
-			}
-		});
-		*/
-
 	});
 
 
@@ -249,8 +223,6 @@ module.exports.add = function(_name, fields){
 			if(err){
 				console.log(err);
 				res.status(err.status).end();
-			}else{
-				console.log('Sent:', filename);
 			}
 		});
 	}
@@ -281,7 +253,7 @@ module.exports.add = function(_name, fields){
 		models[name].findOne({'name':nobj.name}).exec(function (err, items){
 			
 			if( items != null ){
-				return res.apiResponse({status:'error', msg: "item '"+ nobj.name +"' already exists in table '"+ name +"'. Try an update instead?", data:items});
+				return res.apiResponse({status:'error', msg: "item '"+ nobj.name +"' already exists in table '"+ name +"'. Try an update instead?", data:items}, 500);
 			}else{
 				
 				nobj._timestamp = new Date(); // created_at
@@ -307,38 +279,37 @@ module.exports.add = function(_name, fields){
 	});
 
 
-	//app.put('/'+name +'/upload', uploader.fields([{name: 'front', maxCount: 1}]), function (req, res, next) {
-	app.put('/'+name +'/upload', function (req, res, next) {
+	app.put('/'+ name +'/upload', function (req, res, next) {
 
-		var form = new multiparty.Form();//{autoFields:true, uploadDir:'./uploads2'});
+		var form = new multiparty.Form();
 
 		form.parse(req, function(err, fields, files) {
-			//console.log("multiparty fields:", util.inspect(fields));
-			//console.log("multiparty files:", util.inspect(files, {depth:null}) );
-
 			console.log('processing file uploads');
+			
 			var okfiles = [];
 			var id = fields.productId[0];
+
+			// Create dir for the uploads (lazy, as most models will never have images)
+			fs.mkdirsSync(dir_uploads);
+
 			Object.keys(files).forEach( function(f){
 				var o = files[f][0];
-				//console.log(o.headers['content-type'], mime.extension('image/jpeg'), mime.extension(o.headers['content-type']) );
 				var ext = mime.extension(o.headers['content-type']);
 				console.log('ext:', ext);
 
 				var filename = id +'-'+ o.originalFilename + '.'+ ext;
-				fs.renameSync(o.path, './images-org/'+filename);
-				console.log('Saved Original to ./images-org/'+filename);
+				fs.renameSync(o.path, dir_uploads +'/'+ filename);
+				
+				console.log('Saved Original to ', dir_uploads +'/'+ filename);
 				okfiles.push(o.originalFilename);
-
-				// Let the caching-resizer generate scaled copies on-demand instead of eagerly doing it on upload
 			});
 
-			console.log('responding...');
 			res.apiResponse({status:'ok', msg:'upload_confirmed', id:id, files:okfiles});
 
 		});
-		//res.apiResponse({status:'ok', msg:req.body});
+
 	});
+
 
 	// api: update one by id AND diff
 	app.post('/'+name +'/:id', function(req, res){
