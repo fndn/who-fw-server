@@ -35,6 +35,8 @@ var valid_tokens = process.env.TOKENS.split(",");
 
 app.all('/*', function(req, res, next){
 
+	console.log('req.path', req.path);
+
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	console.log('remote_ip', remote_ip );
 	if( remote_ip.indexOf('127.0.0.1') > -1 || remote_ip.indexOf('169.254.') > -1 ){
