@@ -38,11 +38,20 @@ app.all('/*', function(req, res, next){
 	var reqpath = ''+ req.path;
 	console.log('reqpath:', reqpath);
 
+
+	if (reqpath === '/favicon.ico') {
+		console.log('favicon requested');
+		res.writeHead(200, {'Content-Type': 'image/x-icon'} );
+		res.end();
+		return;
+	}
+	
+
 	var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-	console.log('remote_ip:', remote_ip );
+	//console.log('remote_ip:', remote_ip );
 
 	var token = req.headers['x-auth-token'];
-	console.log('token:', token );
+	//console.log('token:', token );
 	//console.log('req.headers', req.headers );
 
 	if( reqpath.split("/")[1] === 'pub' ){
