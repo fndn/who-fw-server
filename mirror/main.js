@@ -581,6 +581,8 @@ function _compareObjects(o1, arr){
 
 function _findObjectByKeyValue( arr, key, val ){
 
+	if( arr.length == 0) return false;
+
 	var use_doc = Object.keys(arr[0]).indexOf('_doc') > -1;
 
 	for(var i=0; i<arr.length; i++){
