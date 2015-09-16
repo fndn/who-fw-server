@@ -177,8 +177,33 @@ module.exports.add = function(_name, fields){
 
 		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
 		
+		if( fs.existsSync(filename_chc) ){
+			// image exist in cache
+			sendFile(res, filename_chc );				
+		}else{
+			
+			if( fs.existsSync(filename_org) ){
+				// create requested size
+				sharp( filename_org )
+					.resize(sizes[0], sizes[1])
+					.toFile(filename_chc, function(err) {
+						if( err ){
+							// could not create the image
+							res.send('Error: could not create the image', 404);
+						}else{
+							sendFile(res, filename_chc );
+						}
+					}
+				);
+			}else{
+				// original does not exist
+				res.send('Error: original does not exist', 404);
+			}
+		}
+
+		/// Node 4?
+		/*
 		fs.access(filename_chc, fs.R_OK, function (err) {
-			/*
 			if( !err ){
 				sendFile(res, filename_chc );				
 			}else{
@@ -203,8 +228,8 @@ module.exports.add = function(_name, fields){
 					}
 				});
 			}
-			*/
 		});
+		*/
 
 	});
 
