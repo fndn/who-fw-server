@@ -176,7 +176,7 @@ module.exports.add = function(_name, fields){
 		var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
 
 		console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
-		
+		/*
 		fs.access(filename_chc, fs.R_OK, function (err) {
 			if( !err ){
 				sendFile(res, filename_chc );				
@@ -202,7 +202,8 @@ module.exports.add = function(_name, fields){
 					}
 				});
 			}
-		});		
+		});
+		*/	
 	});
 
 
