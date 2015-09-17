@@ -99,7 +99,7 @@ mirror.add('testing', 		['removed', 'name']);
 port = 443;
 var hostname = 'fndn.dk';
 
-var certsd = '/etc/sslmate/*.';
+var certsd = '/etc/sslmate/';
 if( __dirname.indexOf('/Users/js/') === 0 ){
 	certsd = '/Users/js/Dropbox/foundation/certs/sslmate/';
 }
@@ -127,8 +127,8 @@ if( port == 443 ){
 	}
 	var server = https.createServer( httpsOpts, app).listen( port );
 
-	console.log('httpsOpts:', httpsOpts);
-	console.log('server:', server);
+	//console.log('httpsOpts:', httpsOpts);
+	//console.log('server:', server);
 
 }else{
 	/// HTTP
