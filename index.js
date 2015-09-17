@@ -115,21 +115,44 @@ if( port == 443 ){
 	console.log('certsd', certsd);
 
 	var https 	  = require("https");
-	var constants = require('constants');
+	//var constants = require('constants');
 	var httpsOpts = {
 		//
 		// disable SSLv3, "POODLE"
 		// https://disablessl3.com/#nodejs
 		// https://gist.github.com/3rd-Eden/715522f6950044da45d8
 
-		secureProtocol: 'SSLv23_method',			
-		secureOptions: constants.SSL_OP_NO_SSLv3,
+		//secureProtocol: 'SSLv23_method',			
+		//secureOptions: constants.SSL_OP_NO_SSLv3,
 
 		hostname: hostname,
 		key:  fs.readFileSync( certsd +'*.'+ hostname +'.key').toString(),
 		cert: fs.readFileSync( certsd +'*.'+ hostname +'.crt').toString(),
-		ca:   fs.readFileSync( certsd +'*.'+ hostname +'.chain.crt').toString()
+		ca:   fs.readFileSync( certsd +'*.'+ hostname +'.chain.crt').toString(),
+
+		// https://certsimple.com/blog/a-plus-node-js-ssl
+		// default node 0.12 ciphers with RC4 disabled
+		ciphers: [
+			"ECDHE-RSA-AES256-SHA384",
+			"DHE-RSA-AES256-SHA384",
+			"ECDHE-RSA-AES256-SHA256",
+			"DHE-RSA-AES256-SHA256",
+			"ECDHE-RSA-AES128-SHA256",
+			"DHE-RSA-AES128-SHA256",
+			"HIGH",
+			"!aNULL",
+			"!eNULL",
+			"!EXPORT",
+			"!DES",
+			"!RC4",
+			"!MD5",
+			"!PSK",
+			"!SRP",
+			"!CAMELLIA"
+		].join(':'),
+		honorCipherOrder: true
 	}
+
 	var server = https.createServer( httpsOpts, app).listen( port );
 
 }else{
