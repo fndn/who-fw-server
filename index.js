@@ -7,6 +7,7 @@ var express 	= require('express');
 var chalk 		= require('chalk');
 var path 		= require('path');
 var fs 			= require('fs');
+var helmet 		= require('helmet');
 var pack 		= require('./package.json');
 var mirror 		= require('./mirror/main.js')
 var mex 		= require('./mongo-express');
@@ -115,7 +116,13 @@ if( port == 443 ){
 	console.log('certsd', certsd);
 
 	var https 	  = require("https");
-	//var constants = require('constants');
+	
+	app.use(helmet.hsts({
+		maxAge: 31536000000,
+		includeSubdomains: true,
+		force: true
+	}));
+
 	var httpsOpts = {
 		//
 		// disable SSLv3, "POODLE"
