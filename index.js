@@ -15,6 +15,13 @@ var mex_mw 		= require('./mongo-express/middleware');
 
 var app = express();
 
+var helmet = require('helmet');
+app.use( helmet.hsts({
+	maxAge: 31536000000,
+	includeSubdomains: true,
+	force: true
+}));
+
 
 app.use(function(req, res, next){
 	// log access to console
@@ -114,13 +121,6 @@ if( port == 443 ){
 	}
 	console.log('certsd', certsd);
 
-
-	var helmet = require('helmet');
-	app.use(helmet.hsts({
-		maxAge: 31536000000,
-		includeSubdomains: true,
-		force: true
-	}));
 
 	var httpsOpts = {
 		//
