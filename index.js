@@ -3,15 +3,16 @@ require('dotenv').load();
 
 var port = process.env.PORT || 8080;
 
-var express = require('express');
-var chalk 	= require('chalk');
-var path 	= require('path');
-var fs 		= require('fs');
-var pack 	= require('./package.json');
-var mirror 	= require('./mirror/main.js')
-var mex 	= require('./mongo-express');
-var mex_cnf = require('./mongo-express/config.default.js');
-var mex_mw 	= require('./mongo-express/middleware');
+var express 	= require('express');
+var chalk 		= require('chalk');
+var path 		= require('path');
+var fs 			= require('fs');
+var constants 	= require('constants');
+var pack 		= require('./package.json');
+var mirror 		= require('./mirror/main.js')
+var mex 		= require('./mongo-express');
+var mex_cnf 	= require('./mongo-express/config.default.js');
+var mex_mw 		= require('./mongo-express/middleware');
 
 var app = express();
 
@@ -117,8 +118,8 @@ if( port == 443 ){
 		// disable SSLv3, "POODLE"
 		// https://disablessl3.com/#nodejs
 		// https://gist.github.com/3rd-Eden/715522f6950044da45d8
-		//secureProtocol: 'SSLv23_method',			
-		//secureOptions: constants.SSL_OP_NO_SSLv3,
+		secureProtocol: 'SSLv23_method',			
+		secureOptions: constants.SSL_OP_NO_SSLv3,
 
 		hostname: hostname,
 		key:  fs.readFileSync( certsd +'*.'+ hostname +'.key').toString(), // "/ssl.key" ),
