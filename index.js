@@ -7,7 +7,6 @@ var express 	= require('express');
 var chalk 		= require('chalk');
 var path 		= require('path');
 var fs 			= require('fs');
-var helmet 		= require('helmet');
 var pack 		= require('./package.json');
 var mirror 		= require('./mirror/main.js')
 var mex 		= require('./mongo-express');
@@ -115,8 +114,8 @@ if( port == 443 ){
 	}
 	console.log('certsd', certsd);
 
-	var https 	  = require("https");
-	
+
+	var helmet = require('helmet');
 	app.use(helmet.hsts({
 		maxAge: 31536000000,
 		includeSubdomains: true,
@@ -160,6 +159,7 @@ if( port == 443 ){
 		honorCipherOrder: true
 	}
 
+	var https  = require("https");
 	var server = https.createServer( httpsOpts, app).listen( port );
 
 }else{
