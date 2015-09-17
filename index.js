@@ -5,6 +5,8 @@ var port = process.env.PORT || 8080;
 
 var express = require('express');
 var chalk 	= require('chalk');
+var path 	= require('path');
+var fs 		= require('fs');
 var pack 	= require('./package.json');
 var mirror 	= require('./mirror/main.js')
 var mex 	= require('./mongo-express');
@@ -93,7 +95,49 @@ mirror.add('registrations',	['removed', 'name']);
 mirror.add('testing', 		['removed', 'name']);
 */
 
+/// SSL
+port = 443;
+var hostname = 'fndn.dk';
 
+var certsd = '/etc/sslmate/*.';
+if( __dirname.indexOf('/Users/js/') === 0 ){
+	certsd = '/Users/js/Dropbox/foundation/certs/sslmate/';
+}
+
+console.log('certsd', certsd);
+
+
+
+/// Start server
+if( port == 443 ){
+	/// HTTPS
+	var https = require("https");
+	var httpsOpts = {
+		//
+		// disable SSLv3, "POODLE"
+		// https://disablessl3.com/#nodejs
+		// https://gist.github.com/3rd-Eden/715522f6950044da45d8
+		//secureProtocol: 'SSLv23_method',			
+		//secureOptions: constants.SSL_OP_NO_SSLv3,
+
+		hostname: hostname,
+		key:  fs.readFileSync( certsd +'*.'+ hostname +'.key').toString(), // "/ssl.key" ),
+		cert: fs.readFileSync( certsd +'*.'+ hostname +'.crt').toString(), // "/ssl.crt" ),
+		ca:   fs.readFileSync( certsd +'*.'+ hostname +'.chained.crt').toString() // "/ca.pem"  )
+	}
+	var server = https.createServer( httpsOpts, app).listen( port );
+
+	console.log('httpsOpts:', httpsOpts);
+	console.log('server:', server);
+
+}else{
+	/// HTTP
+	var server = app.listen( port );
+}
+
+////
 // Start serving
-var server = app.listen( port );
+//var server = app.listen( port );
 console.log("Running '"+ pack.name +"' v."+ pack.version +' on port '+ port );
+
+
