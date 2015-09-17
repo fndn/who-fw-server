@@ -164,6 +164,11 @@ module.exports.add = function(_name, fields){
 		});
 	});
 
+	// link $tag$name $record-id
+	app.get('/'+ name +'/link/:id/i/:size/:tag', function(req, res){ 
+
+	});
+
 
 	// api: get image (with caching resizer)
 	/// http://127.0.0.1:8090/pub/images/_999/i/600x400/back
