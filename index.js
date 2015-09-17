@@ -101,7 +101,7 @@ if( port == 443 ){
 
 	var https  = require("https");
 	var server = https.createServer( httpsOpts, app).listen( port );
-	console.log( chalk.green("Enabled SSL") );
+	console.log( chalk.green("Enabled SSL") +" with certs from", certsd );
 
 }else{
 	/// HTTP
