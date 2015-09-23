@@ -169,11 +169,71 @@ module.exports.add = function(_name, fields){
 
 	});
 
+	app.get('/pub/'+ name +'/img/:imagename', function(req, res){ 
+		var imgname = req.params.imagename.split(".")[0];
+		console.log('imgname', imgname);
+		var parts = imgname.split(/-/g);
+		console.log('parts', parts);
+		if( parts.length < 3 ){
+			res.apiResponse({status:'error', msg:'Illegal imagename provided (convention: id-tag-size)'}, 500);
+			return;
+		}
+		_getImage( parts[0], parts[1], parts[2], res);
+	});
 
-	// api: get image (with caching resizer)
+	// api: get image (with caching resizer) NJheV3mC/front/300x300
 	/// http://127.0.0.1:8090/pub/images/_999/i/600x400/back
-	app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
+	//app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
+	app.get('/pub/'+ name +'/:id/image/:tag/:size', function(req, res){
+		_getImage( req.params.id, req.params.tag, req.params.size, res);
+	});
+	
+	function _getImage(id, tag, size, res){
+		var sizes = size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
+		if( sizes.length < 2 ){
+			res.apiResponse({status:'error', msg:'Illegal size provided (max size on any dimension: 16383px)'}, 500);
+			return;
+		}
 		
+		//console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
+
+		var filename_chc = dir_imagecache +'/'+ id +'-'+ tag +'-'+ size +'.jpeg';
+		var filename_org = dir_uploads    +'/'+ id +'-'+ tag +'.jpeg';
+		console.log("filename cache:", filename_chc );
+		console.log("filename orig: ", filename_org );
+
+		//var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
+		//var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
+		//console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
+		
+		if( fs.existsSync(filename_chc) ){
+			// image exist in cache
+			console.log("⁙ img: serving cached");
+			sendFile(res, filename_chc );				
+		}else{
+			
+			if( fs.existsSync(filename_org) ){
+				// create requested size
+				sharp( filename_org )
+					.resize(sizes[0], sizes[1])
+					.toFile(filename_chc, function(err) {
+						if( err ){
+							// could not create the image
+							res.apiResponse({status:'error', msg:'could not create the image'}, 404);
+						}else{
+							console.log("* img: serving resized");
+							sendFile(res, filename_chc );
+						}
+					}
+				);
+			}else{
+				// original does not exist
+				res.apiResponse({status:'error', msg:'original does not exist'}, 404);
+			}
+		}
+	}
+
+/*
 		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
 		if( sizes.length < 2 ){
 			res.apiResponse({status:'error', msg:'Illegal size provided (max size on any dimension: 16383px)'}, 500);
@@ -217,6 +277,7 @@ module.exports.add = function(_name, fields){
 			}
 		}
 	});
+*/
 
 
 	// helper for the get::image endpoint:
@@ -237,7 +298,7 @@ module.exports.add = function(_name, fields){
 	}
 
 	// api: find all newer than
-	app.get('/'+name +'/gte/:date', function(req, res){
+	app.get('/'+ name +'/gte/:date', function(req, res){
 		var startDate = new Date(req.params.date);
 		console.log( name + " since", req.params.date, ' -> ', startDate );
 		models[name].find({
@@ -259,10 +320,11 @@ module.exports.add = function(_name, fields){
 
 		console.log('req.body:', req.body);
 
-		models[name].findOne({'name':nobj.name}).exec(function (err, items){
+		//models[name].findOne({'hash':nobj.hash}).exec(function (err, items){
+		models[name].findOne({'name':nobj.name}).exec(function (err, items){	
 			
 			if( items != null ){
-				return res.apiResponse({status:'error', msg: "item '"+ nobj.name +"' already exists in table '"+ name +"'. Try an update instead?", data:items}, 500);
+				return res.apiResponse({status:'error', msg: "item "+ name +"/"+ nobj.name +" already exists in table "+ name +". Try an update instead?", data:items}, 500);
 			}else{
 				
 				nobj._timestamp = new Date(); // created_at
@@ -274,17 +336,7 @@ module.exports.add = function(_name, fields){
 				});
 			}
 
-		});
-
-		/*
-		nobj._timestamp = new Date(); // created_at
-		new models[name](nobj).save(function (err, item) {
-			if (err) return res.apiError(err);
-			res.apiResponse({status:'ok', msg:item});
-
-			models[name].find(function(err, items){console.log("all "+ name, items) });
-		});
-		*/		
+		});	
 	});
 
 
@@ -326,7 +378,7 @@ module.exports.add = function(_name, fields){
 		if( req.params.id == 'diff' ){
 			//Note: The diff function only works if there is a $name field on the objects
 			var cdata = req.body.list;
-			console.log("computing diff on table '"+ name); //, cdata );
+			console.log("computing diff on table '"+ name +"'");//, cdata );
 			_compute_dif(name, cdata, function(err, result){
 				if (err) return res.apiError(err);
 				res.apiResponse({status:'ok', msg:result});
@@ -335,22 +387,6 @@ module.exports.add = function(_name, fields){
 		}else{
 			console.log("update ", req.params.id );
 
-			/*
-			models[name].findById(req.params.id).exec(function(err, item) {
-				if (err) return res.apiError(err);
-				//res.apiResponse({status:'ok', msg:item});
-				item._timestamp = new Date(); // updated_at
-				item.
-			});
-			
-			*/
-			/*
-			req.body._timestamp = new Date(); // updated_at
-			models[name].findOneAndUpdate(req.params.id, req.body, {new:true, upsert:true}, function (err, item) {
-				if (err) return res.apiError(err);
-				res.apiResponse({status:'ok', msg:item});
-			});
-			*/
 			req.body._timestamp = new Date(); // updated_at
 			models[name].update({_id:req.params.id}, req.body, {new:true, upsert:false}, function (err, item) {
 				if (err) return res.apiError(err.message);
@@ -384,7 +420,8 @@ function _compute_dif(tablename, list, cb){
 	
 	models[tablename].find( function(err, items) {
 
-		//console.log('## items', items);
+		console.log('\n## Client items', list);
+		console.log('\n## Server items', items);
 
 		var ret = {table:tablename, add:[], put:[], del:[]};
 		var i, len, o, cr;
@@ -399,7 +436,7 @@ function _compute_dif(tablename, list, cb){
 		// if not, add it
 		len = list.length;
 		for(var i=0; i<len; i++){
-			var so = _findObjectByKeyValue(items, "name", list[i].name);
+			var so = _findObjectByKeyValue(items, "hash", list[i].hash);
 			if( so ){
 				// record exist on server. Is it marked as Removed?
 				if( so.removed == 'y' ){
@@ -424,23 +461,27 @@ function _compute_dif(tablename, list, cb){
 		// if there is no math, send it as ADD
 		len = items.length;
 		for(var i=0; i<len; i++){
-			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i]._doc.name) ){
+			if( !_doesArrayContainObjectWithKeyValue(list, "hash", items[i]._doc.hash) ){
 				var o = _strip_fromObject( items[i]._doc );
-				//console.log( items[i]._doc.name + " DOES NOT exist on the client.", items[i]._doc, o );
+				console.log( items[i]._doc.name + " DOES NOT exist on the client.", items[i]._doc, o );
 				if( items[i]._doc.removed != 'y' ){
-					//console.log('ADD to CLIENT', o);
-					ret.add.push(o);
+					console.log('ADD to CLIENT', o);
+					//ret.add.push(o);
 				}
 			}else{
 				//console.log( items[i]._doc.name + " EXISTS on the client.", items[i]._doc );
 
 				var o = _strip_fromObject( items[i]._doc );
 
-				if( cr = _compareObjects(o, list) ){
-
-					if( items[i].removed != 'y' ){
-						o._id = cr._id;
-						//console.log("PUT to CLIENT", o);
+				if( items[i].removed != 'y' ){
+					
+					//console.log(' COMPARING ', o, list, "result:", _compareObjects(o, list)  );
+					console.log('\n');
+					var cr = _compareObjects(o, list);
+					console.log(" COMPARING.. result:", cr);
+					
+					if( ! cr ){
+						console.log("PUT to CLIENT", o);
 						ret.put.push(o);
 					}
 				}
@@ -450,94 +491,6 @@ function _compute_dif(tablename, list, cb){
 
 		//console.log('##--------- final ret:', ret);
 		//console.log('##--------- final batch:', batch);
-		
-
-		/*
-		// compute $add and $put
-		len = items.length;
-		for(var i=0; i<len; i++){
-			if( !_doesArrayContainObjectWithKeyValue(list, "name", items[i]._doc.name) ){
-				// record does not exist on the client
-				var o = _strip_fromObject( items[i]._doc );
-
-				if( items[i].removed != 'y' ){
-					console.log("ADD", o);
-					if( Object.keys(o).length > 0 ){
-						ret.add.push(o);
-					}
-				}
-			
-			}else{
-				// records match on "name", compare the other keys - treating server as truth
-
-				var o = _strip_fromObject( items[i]._doc );
-
-				if( cr = _compareObjects(o, list) ){
-
-					if( items[i].removed != 'y' ){
-						//console.log(" PUT:", o);
-						o._id = cr._id;
-						ret.put.push(o);
-					}
-				}
-			}
-		}
-		*/
-
-		/*
-		// compute server add
-		len = list.length;
-		for(var i=0; i<len; i++){
-			//console.log('#3 items[i].name:', items[i]._doc.name, "items[i]:", items[i]._doc );
-			if( !_doesArrayContainObjectWithKeyValue(items, "name", list[i].name) ){
-				// record does not exist on the server
-				
-				var co = list[i];
-				delete co._id;
-				
-				//Check for Empty keys
-				var _tmp = [];
-				Object.keys(co).forEach( function(k){
-					_tmp.push( co[k] );
-				});
-				if( _tmp.join('') != '' ){
-					co._timestamp = new Date(); // created_at
-					var doc = new models[tablename](co);
-					batch.push( doc );
-					console.log("SERVER-ADD", co);	
-				}
-			}			
-		}
-		*/
-
-		/*
-		// compute $del (manually adding a $removed key to the server table)
-		len = list.length;
-		for(var i=0; i<len; i++){
-			if( so = _findObjectByKeyValue(items, "name", list[i].name) ){
-				// record exist on the server but not (or are different) on the client
-				console.log('######### 1 DEL checking REMOVED: ', so.removed, so, list[i]);
-				// only handle those that does not exist
-				if( _findObjectByKeyValue(ret.put, "name", list[i].name)){
-					// record has already been added to put (for update)
-				}else{
-					// only send if its not marked as removed on the server
-
-					console.log('######### 2 DEL checking REMOVED: ', so.removed, so, list[i]);
-
-					if( so.removed == 'y'){
-						ret.del.push(list[i]);
-					}
-				}
-			}else{
-				// new
-				//console.log('######### 3 DEL checking REMOVED: ', so.removed, so, list[i]);
-				//var _o = _findObjectByKeyValue(items, "name", list[i].name);
-				//console.log('   3 DEL checking REMOVED: ', _o, items );
-				
-			}		
-		}
-		*/	
 	
 		cb(null, ret);
 
@@ -572,19 +525,17 @@ function _doesArrayContainObjectWithKeyValue( arr, key, val ){
 
 function _compareObjects(o1, arr){
 	var o1k = Object.keys(o1);
-	var match = null;
-	// find $name match
 	for(var i=0; i<arr.length; i++){
-		if( arr[i].name == o1.name ){
+		if( arr[i].hash == o1.hash ){
 			var o2 = arr[i];
-			o1k.forEach( function(k){
-				//console.log("comparing on key", k, o1[k], o2[k], ( o1[k] == o2[k] ) );
-				if( o1[k] != o2[k] ) match = o2; //matching = false;
-			});
+			for(var j=0; j<o1k.length; j++){
+				var k = o1k[j];
+				console.log("comparing on key", k, o1[k], o2[k], " => ", ( o1[k] == o2[k] ) );
+				if( o1[k] != o2[k] ) return false; // there is a difference
+			}
 		}
 	}	
-	//return matching;
-	return match;
+	return true;
 }
 
 function _findObjectByKeyValue( arr, key, val ){

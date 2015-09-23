@@ -7,6 +7,7 @@ var hostname 	= process.env.HOSTNAME || 'localhost';
 
 var express 	= require('express');
 var chalk 		= require('chalk');
+var helmet 		= require('helmet');
 var path 		= require('path');
 var fs 			= require('fs');
 var pack 		= require('./package.json');
@@ -22,6 +23,8 @@ app.get('/version', function(req, res){
 	res.json({'status':'ok', 'code':'VERSION', 'message': pack.name +' v.'+ pack.version});
 });
 
+
+
 // Connect Mongo-Express
 console.log( chalk.green("Starting Mongo-Express on /mex") );
 app.use('/mex', mex_mw(mex_cnf));
@@ -31,11 +34,11 @@ console.log( chalk.green("Enabling Simple Auth") );
 app.use( sauth() );
 
 // Connect Mirror
-mirror.init( app, 'whofw-dev-100' );
+mirror.init( app, 'whofw-dev-9000' );
 
 // Configure Mirror
 // Table list from Client's Datastore.Config:
-var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "storeBrands", "ageGroups", "products", "registrations", "images"];
+var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "storeBrands", "ageGroups", "products", "register", "images"];
 
 tables.forEach( function(t){
 	mirror.add(t, []); // using loose schemas
@@ -92,7 +95,6 @@ if( port == 443 ){
 		honorCipherOrder: true
 	};
 
-	var helmet = require('helmet');
 	app.use( helmet.hsts({
 		maxAge: 31536000000,
 		includeSubdomains: true,
