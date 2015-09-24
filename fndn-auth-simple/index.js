@@ -1,8 +1,8 @@
 require('dotenv').load();
 
-var tokens 		 = process.env.TOKENSx;
+var tokens 		 = process.env.TOKENS;
 var valid_tokens = tokens ? tokens.split(",") : [];
-//console.log('valid_tokens', valid_tokens);
+console.log('valid_tokens', valid_tokens);
 
 module.exports = function(){
 
@@ -18,6 +18,9 @@ module.exports = function(){
 			return;
 		}
 		
+		console.log('---------------------------------------------------------------------');
+		console.log("> ", req.url );
+
 		var remote_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 		console.log('remote_ip:', remote_ip );
 

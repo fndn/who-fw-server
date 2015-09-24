@@ -233,54 +233,7 @@ module.exports.add = function(_name, fields){
 		}
 	}
 
-/*
-		var sizes = req.params.size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
-		if( sizes.length < 2 ){
-			res.apiResponse({status:'error', msg:'Illegal size provided (max size on any dimension: 16383px)'}, 500);
-			return;
-		}
-		
-		//console.log("get image for id:", req.params.id, "size:", req.params.size, sizes, "tag:", req.params.tag);
-
-		var filename_chc = dir_imagecache +'/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
-		var filename_org = dir_uploads    +'/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
-		console.log("filename cache:", filename_chc );
-		console.log("filename orig: ", filename_org );
-
-		//var filename_chc = './imagecache/'+ req.params.id +'-'+ req.params.tag +'-'+ req.params.size +'.jpeg';
-		//var filename_org = './images-org/'+ req.params.id +'-'+ req.params.tag +'.jpeg';
-		//console.log("filename_chc:", filename_chc, "filename_org:", filename_org );
-		
-		if( fs.existsSync(filename_chc) ){
-			// image exist in cache
-			console.log("⁙ img: serving cached");
-			sendFile(res, filename_chc );				
-		}else{
-			
-			if( fs.existsSync(filename_org) ){
-				// create requested size
-				sharp( filename_org )
-					.resize(sizes[0], sizes[1])
-					.toFile(filename_chc, function(err) {
-						if( err ){
-							// could not create the image
-							res.apiResponse({status:'error', msg:'could not create the image'}, 404);
-						}else{
-							console.log("* img: serving resized");
-							sendFile(res, filename_chc );
-						}
-					}
-				);
-			}else{
-				// original does not exist
-				res.apiResponse({status:'error', msg:'original does not exist'}, 404);
-			}
-		}
-	});
-*/
-
-
-	// helper for the get::image endpoint:
+	// helper for the _getImage endpoint:
 	function sendFile(res, filename){
 		var options = {
 			dotfiles: 'deny',
@@ -361,7 +314,7 @@ module.exports.add = function(_name, fields){
 				var filename = id +'-'+ o.originalFilename + '.'+ ext;
 				fs.renameSync(o.path, dir_uploads +'/'+ filename);
 				
-				console.log('Saved Original to ', dir_uploads +'/'+ filename);
+				console.log( chalk.blue('Saved Original to ', dir_uploads +'/'+ filename) );
 				okfiles.push(o.originalFilename);
 			});
 

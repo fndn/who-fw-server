@@ -34,7 +34,7 @@ console.log( chalk.green("Enabling Simple Auth") );
 app.use( sauth() );
 
 // Connect Mirror
-mirror.init( app, 'whofw-dev-9000' );
+mirror.init( app, 'whofw-dev-9003' );
 
 // Configure Mirror
 // Table list from Client's Datastore.Config:
