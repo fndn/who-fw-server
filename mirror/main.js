@@ -419,7 +419,7 @@ function _compute_dif(tablename, list, cb){
 				console.log( items[i]._doc.name + " DOES NOT exist on the client.", items[i]._doc, o );
 				if( items[i]._doc.removed != 'y' ){
 					console.log('ADD to CLIENT', o);
-					//ret.add.push(o);
+					ret.add.push(o);
 				}
 			}else{
 				//console.log( items[i]._doc.name + " EXISTS on the client.", items[i]._doc );
