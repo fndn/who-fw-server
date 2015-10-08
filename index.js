@@ -34,11 +34,11 @@ console.log( chalk.green("Enabling Simple Auth") );
 app.use( sauth() );
 
 // Connect Mirror
-mirror.init( app, 'whofw-dev-9003' );
+mirror.init( app, 'fwa-151008' );
 
 // Configure Mirror
 // Table list from Client's Datastore.Config:
-var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "storeBrands", "ageGroups", "products", "register", "images"];
+var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "storeBrands", "ageGroups", "products", "register", "images", "currencies"];
 
 tables.forEach( function(t){
 	mirror.add(t, []); // using loose schemas
