@@ -25,6 +25,6 @@ echo "restarting (1)"
 sleep 1 # give the app time to (re)start
 
 
-echo "updated server, now running version: curl http://$APIDOMAIN/version"
-curl http://$APIDOMAIN/version
+echo "updated server, now running version: curl https://$APIDOMAIN/version"
+curl https://$APIDOMAIN/version
 echo ""

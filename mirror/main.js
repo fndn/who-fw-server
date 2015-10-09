@@ -277,7 +277,7 @@ module.exports.add = function(_name, fields){
 		models[name].findOne({'name':nobj.name}).exec(function (err, items){	
 			
 			if( items != null ){
-				return res.apiResponse({status:'error', msg: "item "+ name +"/"+ nobj.name +" already exists in table "+ name +". Try an update instead?", data:items}, 500);
+				return res.apiResponse({status:'error', type:'duplicate', msg: "item "+ name +"/"+ nobj.name +" already exists in table "+ name +". Try an update instead?", data:items}, 500);
 			}else{
 				
 				nobj._timestamp = new Date(); // created_at

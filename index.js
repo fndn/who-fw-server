@@ -34,7 +34,7 @@ console.log( chalk.green("Enabling Simple Auth") );
 app.use( sauth() );
 
 // Connect Mirror
-mirror.init( app, 'fwa-151008' );
+mirror.init( app, 'fwa-151009' );
 
 // Configure Mirror
 // Table list from Client's Datastore.Config:
@@ -43,17 +43,6 @@ var tables = ["countries", "locations", "brands", "incomeTypes", "storeTypes", "
 tables.forEach( function(t){
 	mirror.add(t, []); // using loose schemas
 });
-/*
-// Add model APIs
-mirror.add('countries', 	['removed', 'name', 'countryCode']);
-mirror.add('locations',		['removed', 'name', 'neighbourhood', 'street', 'incomeType', 'countryId']);
-mirror.add('incomeTypes', 	['removed', 'name']);
-mirror.add('storeTypes', 	['removed', 'name']);
-mirror.add('brands', 		['removed', 'name']);
-mirror.add('registrations',	['removed', 'name']);
-
-mirror.add('testing', 		['removed', 'name']);
-*/
 
 // Start Server
 
