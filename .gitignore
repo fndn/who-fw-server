@@ -3,6 +3,5 @@ node_modules
 node_modules/*
 npm-debug.log
 img-cache/**.jp*
-images-org/*.jp*
-uploads
+img-origs/**.jp*
 .env
