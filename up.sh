@@ -6,7 +6,7 @@
 
 DIR=`pwd`
 SERVER="46.101.177.65"
-APIDOMAIN="whofw.fndn.dk:8080"
+APIDOMAIN="whofw.fndn.dk"
 REMOTE_DIR="/var/www/whofw"
 
 

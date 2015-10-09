@@ -48,6 +48,7 @@ var path 		= require('path');
 var multiparty  = require('multiparty');
 var sharp 		= require('sharp');
 var mime 		= require('mime');
+var handlebars 	= require('handlebars');
 
 var db;
 var app;
@@ -169,6 +170,52 @@ module.exports.add = function(_name, fields){
 
 	});
 
+	var tpl_list = null;
+
+	app.get('/pub/'+ name +'/list', function(req, res){
+		
+		if( !tpl_list ){
+			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
+		}
+
+	    models[name].find( function(err, items) {
+	    	console.log('items', items);
+
+			var html = tpl_list({
+				title: 	name,
+				headers: Object.keys(items[0]._doc),
+				records: items.map( function(rec){ return rec._doc; })
+			});
+
+			res.setHeader('content-type', 'text/html');
+			res.send( html );
+		});
+	});
+
+	
+	app.get('/pub/'+ name +'/csv', function(req, res){ 
+
+		models[name].find( function(err, items) {
+			items = items.map( function(rec){ return rec._doc; })
+			
+			var doc = '';
+			doc += Object.keys(items[0]).join(';');
+			doc += "\n";
+			for(var i in items){
+				var row = items[i];
+				var vals = [];
+				for(var j in row){
+					vals.push( row[j] );
+				}
+				doc += vals.join(';');
+				doc += "\n";
+			}
+			res.setHeader('content-type', 'text/csv');
+			res.send( doc );
+		});
+	});
+
+
 	app.get('/pub/'+ name +'/img/:imagename', function(req, res){ 
 		var imgname = req.params.imagename.split(".")[0];
 		console.log('imgname', imgname);
@@ -181,13 +228,13 @@ module.exports.add = function(_name, fields){
 		_getImage( parts[0], parts[1], parts[2], res);
 	});
 
+	/*
 	// api: get image (with caching resizer) NJheV3mC/front/300x300
-	/// http://127.0.0.1:8090/pub/images/_999/i/600x400/back
-	//app.get('/pub/'+ name +'/:id/i/:size/:tag', function(req, res){ 
 	app.get('/pub/'+ name +'/:id/image/:tag/:size', function(req, res){
 		_getImage( req.params.id, req.params.tag, req.params.size, res);
 	});
-	
+	*/
+
 	function _getImage(id, tag, size, res){
 		var sizes = size.split('x').map(function(s){ return parseInt(s); }).filter( function(s){ return s <= 16383 });
 		if( sizes.length < 2 ){
@@ -508,7 +555,6 @@ function _findObjectByKeyValue( arr, key, val ){
 	}
 	return false;
 }
-
 
 function _strip_fromObject(obj){
 	var ret = {};

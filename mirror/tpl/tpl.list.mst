@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{title}} list</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//cdn.datatables.net/1.10.9/css/dataTables.bootstrap.min.css">
+	<style type="text/css">
+		body { padding: 10px; }
+		td { white-space: nowrap;}
+		#listings_wrapper #listings_filter {
+			text-align: left !important;
+			padding: 10px;
+			background-color: #EFEFEF;
+			margin-top: 10px;
+			padding-top: 15px;
+		}
+	</style>
+</head>
+<body>
+
+<div>
+	<a href="/pub/register/csv"><button type="button" class="btn btn-primary">Download CSV</button></a>
+</div>
+
+
+<table id="listings" class="table table-hover table-bordered">
+	<thead>
+	{{#headers}}
+		<th>{{.}}</th>
+	{{/headers}}
+	</thead>
+	<tbody>
+	{{#records}}
+		<tr>
+		{{#each .}}
+			<td>{{this}}</td>
+		{{/each}}
+		</tr>
+	{{/records}}
+	</tbody>
+</table>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="//cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	$('#listings').DataTable({"paging":false, "info":false});
+});
+</script>
+
+</body>
+</html>
