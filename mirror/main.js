@@ -174,17 +174,19 @@ module.exports.add = function(_name, fields){
 
 	app.get('/pub/'+ name +'/list', function(req, res){
 		
+		name = 'register';
+
 		if( !tpl_list ){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
 		}
 
 	    models[name].find( function(err, items) {
-	    	console.log('items', items);
+	    	items = items.map( function(rec){ return rec._doc.doc; });
 
 			var html = tpl_list({
 				title: 	name,
-				headers: Object.keys(items[0]._doc),
-				records: items.map( function(rec){ return rec._doc; })
+				headers: Object.keys(items[0]),
+				records: items
 			});
 
 			res.setHeader('content-type', 'text/html');
@@ -195,8 +197,10 @@ module.exports.add = function(_name, fields){
 	
 	app.get('/pub/'+ name +'/csv', function(req, res){ 
 
+		name = 'register';
+
 		models[name].find( function(err, items) {
-			items = items.map( function(rec){ return rec._doc; })
+			items = items.map( function(rec){ return rec._doc.doc; })
 			
 			var doc = '';
 			doc += Object.keys(items[0]).join(';');
