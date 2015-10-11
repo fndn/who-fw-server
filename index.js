@@ -4,6 +4,7 @@ require('dotenv').load();
 var port 		= process.env.PORT || 443;
 var devport 	= process.env.DEVPORT || 8090;
 var hostname 	= process.env.HOSTNAME || 'localhost';
+var database 	= process.env.DATABASE || 'fwa-151009';
 
 var express 	= require('express');
 var chalk 		= require('chalk');
@@ -34,7 +35,7 @@ console.log( chalk.green("Enabling Simple Auth") );
 app.use( sauth() );
 
 // Connect Mirror
-mirror.init( app, 'fwa-151009' );
+mirror.init( app, database );
 
 // Configure Mirror
 // Table list from Client's Datastore.Config:

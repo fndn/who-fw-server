@@ -377,7 +377,7 @@ module.exports.add = function(_name, fields){
 
 
 	// api: update one by id AND diff
-	app.post('/'+name +'/:id', function(req, res){
+	app.post('/'+ name +'/:id', function(req, res){
 
 		if( req.params.id == 'diff' ){
 			//Note: The diff function only works if there is a $name field on the objects
