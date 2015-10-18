@@ -2,6 +2,8 @@
 node_modules
 node_modules/*
 npm-debug.log
-img-cache/**
-img-origs/**
+img-cache
+img-cache/*
+img-origs
+img-origs/*
 .env
