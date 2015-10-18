@@ -192,15 +192,20 @@ module.exports.add = function(_name, fields){
 
 			console.log('items.length', items.length);
 
-			for(var i=0, len = items.length; i<len; i++){
-				var item = items[i];
-				var keys = Object.keys(item);
-				console.log('item:', item, 'keys:', keys );
-				for(var j=0, len2 = keys.length; j<len2; j++){
-					var key = keys[j];
-					console.log('item:', item, 'key:', key );
-					if( re.exec(key) !== null ){
-						console.log('key:', key, 'val:', item[key] );
+			if( items.length === 0){
+				items = [{}];
+			}else{
+
+				for(var i=0, len = items.length; i<len; i++){
+					var item = items[i];
+					var keys = Object.keys(item);
+					//console.log('item:', item, 'keys:', keys );
+					for(var j=0, len2 = keys.length; j<len2; j++){
+						var key = keys[j];
+						console.log('item:', item, 'key:', key );
+						if( re.exec(key) !== null ){
+							console.log('key:', key, 'val:', item[key] );
+						}
 					}
 				}
 			}
