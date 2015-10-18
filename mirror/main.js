@@ -204,13 +204,12 @@ module.exports.add = function(_name, fields){
 						var key = keys[j];
 						//console.log('testing key:', key );
 						if( re.exec(key) !== null ){
-							
+							console.log('# matched key:', key, 'val:', item[key] );
 
 							items[i][key] = items[i][key].replace('products', 'products/img');
 							items[i][key] = items[i][key].replace('jpg', 'jpeg');
 							items[i][key] = '<a href="//'+ items[i][key] +'">'+ items[i][key] +'</a>';
-
-							console.log('# matched key:', key, 'val:', item[key], items[i][key] );
+							console.log('> result:', items[i][key] );
 						}
 					}
 				}
