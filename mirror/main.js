@@ -180,8 +180,10 @@ module.exports.add = function(_name, fields){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
 		}
 
-	    models[name].find( function(err, items) {
-	    	items = items.map( function(rec){ return rec._doc.doc; });
+		models[name].find( function(err, items) {
+			items = items.map( function(rec){ return rec._doc.doc; });
+
+			console.log('items', items);
 
 			var html = tpl_list({
 				title: 	name,
