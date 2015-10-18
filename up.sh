@@ -15,16 +15,16 @@ git commit -a -m "$(node -pe 'require("./package.json").version') auto"
 git push origin master
 
 
-echo ""
-echo 'Working @ remote '$SERVER
-ssh root@$SERVER 'cd '$REMOTE_DIR'; git pull origin master; pm2 reload all;'
+#echo ""
+#echo 'Working @ remote '$SERVER
+#ssh root@$SERVER 'cd '$REMOTE_DIR'; git pull origin master; pm2 reload all;'
 
 
-echo ""
-echo "restarting (1)"
-sleep 3 # give the app time to (re)start
+#echo ""
+#echo "restarting (1)"
+#sleep 3 # give the app time to (re)start
 
 
-echo "updated server, now running version: curl https://$APIDOMAIN/version"
-curl https://$APIDOMAIN/version
-echo ""
+#echo "updated server, now running version: curl https://$APIDOMAIN/version"
+#curl https://$APIDOMAIN/version
+#echo ""
