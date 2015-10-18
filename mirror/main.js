@@ -208,7 +208,7 @@ module.exports.add = function(_name, fields){
 
 							items[i][key] = items[i][key].replace('products', 'products/img');
 							items[i][key] = items[i][key].replace('1136x640.jpg', '640x1136.jpeg');
-							items[i][key] = '<a href="'+ items[i][key] +'">'+ (items[i][key].split('img/')[1]) +'</a>';
+							items[i][key] = '<a target="_blank" href="'+ items[i][key] +'">'+ (items[i][key].split('-')[2]) +'</a>';
 							console.log('> result:', items[i][key] );
 						}
 					}
