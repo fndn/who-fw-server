@@ -189,6 +189,7 @@ module.exports.add = function(_name, fields){
 				headers: Object.keys(items[0]),
 				records: items.map( function(rec){
 					console.log( rec );
+					return rec;
 					/*
 					if( [].indexOf(rec )
 					rec.img_back_url = rec.img_back_url.replace('products', 'products/img');
