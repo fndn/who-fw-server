@@ -175,18 +175,28 @@ module.exports.add = function(_name, fields){
 	app.get('/pub/'+ name +'/list', function(req, res){
 		
 		name = 'register';
+		var re = /(^img_)(.+)(_url$)/g; 
 
 		if( !tpl_list ){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
 		}
 
-	    models[name].find( function(err, items) {
-	    	items = items.map( function(rec){ return rec._doc.doc; });
+		models[name].find( function(err, items) {
+			items = items.map( function(rec){ return rec._doc.doc; });
 
 			var html = tpl_list({
 				title: 	name,
 				headers: Object.keys(items[0]),
-				records: items
+				records: items.map( function(rec){
+					console.log( rec );
+					/*
+					if( [].indexOf(rec )
+					rec.img_back_url = rec.img_back_url.replace('products', 'products/img');
+					rec.img_back_url = rec.img_back_url.replace('jpg', 'jpeg');
+					// https://whofw.fndn.dk/pub/products/img/VyY08H8lg-back-2040x6136.jpeg
+					// https://whofw.fndn.dk/pub/products/img/Ek8ClsVxg-back-1136x640.jpg
+					*/
+				});
 			});
 
 			res.setHeader('content-type', 'text/html');
