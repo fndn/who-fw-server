@@ -190,7 +190,8 @@ module.exports.add = function(_name, fields){
 				var item = items[i];
 				var keys = Object.keys(item);
 				for(var j=0, len2 = keys.length; j<len2; j++){
-					var key = item[keys[j]];
+					var key = keys[j];
+					console.log('item:', item, 'key:', key );
 					if( re.exec(key) !== null ){
 						console.log('key:', key, 'val:', item[key] );
 					}
