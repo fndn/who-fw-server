@@ -184,7 +184,7 @@ module.exports.add = function(_name, fields){
 		models[name].find( function(err, items) {
 			items = items.map( function(rec){ return rec._doc.doc; });
 
-			console.log('items', items); // array of objects
+			//console.log('items', items); // array of objects
 
 			console.log('items.length', items.length);
 
