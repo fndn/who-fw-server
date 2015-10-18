@@ -202,9 +202,9 @@ module.exports.add = function(_name, fields){
 					//console.log('item:', item, 'keys:', keys );
 					for(var j=0, len2 = keys.length; j<len2; j++){
 						var key = keys[j];
-						console.log('item:', item, 'key:', key );
+						console.log('testing key:', key );
 						if( re.exec(key) !== null ){
-							console.log('key:', key, 'val:', item[key] );
+							console.log('# matched key:', key, 'val:', item[key] );
 						}
 					}
 				}
