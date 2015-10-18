@@ -15,9 +15,9 @@ git commit -a -m "$(node -pe 'require("./package.json").version') auto"
 git push origin master
 
 
-#echo ""
-#echo 'Working @ remote '$SERVER
-#ssh root@$SERVER 'cd '$REMOTE_DIR'; git pull origin master; pm2 reload all;'
+echo ""
+echo 'Working @ remote '$SERVER
+ssh root@$SERVER 'cd '$REMOTE_DIR'; git pull origin master; ' #pm2 reload all;'
 
 
 #echo ""
