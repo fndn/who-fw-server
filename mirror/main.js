@@ -184,11 +184,12 @@ module.exports.add = function(_name, fields){
 		models[name].find( function(err, items) {
 			items = items.map( function(rec){ return rec._doc.doc; });
 
-			console.log('items', items); // array of objects
+			console.log('items', items, items.length); // array of objects
 
 			for(var i=0, len = items.length; i<len; i++){
 				var item = items[i];
 				var keys = Object.keys(item);
+				console.log('item:', item, 'keys:', keys );
 				for(var j=0, len2 = keys.length; j<len2; j++){
 					var key = keys[j];
 					console.log('item:', item, 'key:', key );
