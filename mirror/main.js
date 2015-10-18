@@ -175,11 +175,7 @@ module.exports.add = function(_name, fields){
 	app.get('/pub/'+ name +'/list', function(req, res){
 		
 		name = 'register';
-<<<<<<< HEAD
-		var re = /(^img_)(.+)(_url$)/g;
-=======
 		var re = /(^img_)(.+)(_url$)/g; 
->>>>>>> 50802e61e05798f5c9ee59166ac2693bd488aedb
 
 		if( !tpl_list ){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
@@ -188,8 +184,11 @@ module.exports.add = function(_name, fields){
 		models[name].find( function(err, items) {
 			items = items.map( function(rec){ return rec._doc.doc; });
 
-<<<<<<< HEAD
 			//console.log('items', items); // array of objects
+			//rec.img_back_url = rec.img_back_url.replace('products', 'products/img');
+			//rec.img_back_url = rec.img_back_url.replace('jpg', 'jpeg');
+			// https://whofw.fndn.dk/pub/products/img/VyY08H8lg-back-2040x6136.jpeg
+			// https://whofw.fndn.dk/pub/products/img/Ek8ClsVxg-back-1136x640.jpg
 
 			console.log('items.length', items.length);
 
@@ -206,25 +205,10 @@ module.exports.add = function(_name, fields){
 				}
 			}
 
-
-=======
-			console.log( "items", items );
->>>>>>> 50802e61e05798f5c9ee59166ac2693bd488aedb
-
 			var html = tpl_list({
 				title: 	name,
 				headers: Object.keys(items[0]),
-				records: items/*.map( function(rec){
-					console.log( rec );
-					return rec;
-					
-					if( [].indexOf(rec )
-					rec.img_back_url = rec.img_back_url.replace('products', 'products/img');
-					rec.img_back_url = rec.img_back_url.replace('jpg', 'jpeg');
-					// https://whofw.fndn.dk/pub/products/img/VyY08H8lg-back-2040x6136.jpeg
-					// https://whofw.fndn.dk/pub/products/img/Ek8ClsVxg-back-1136x640.jpg
-					
-				});*/
+				records: items
 			});
 
 			res.setHeader('content-type', 'text/html');
