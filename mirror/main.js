@@ -175,6 +175,7 @@ module.exports.add = function(_name, fields){
 	app.get('/pub/'+ name +'/list', function(req, res){
 		
 		name = 'register';
+		var re = /(^img_)(.+)(_url$)/g;
 
 		if( !tpl_list ){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
@@ -183,7 +184,20 @@ module.exports.add = function(_name, fields){
 		models[name].find( function(err, items) {
 			items = items.map( function(rec){ return rec._doc.doc; });
 
-			console.log('items', items);
+			console.log('items', items); // array of objects
+
+			for(var i=0, len = items.length; i<len; i++){
+				var item = items[i];
+				var keys = Object.keys(item);
+				for(var j=0, len2 = keys.length; j<len2; j++){
+					var key = item[keys[j]];
+					if( re.exec(key) !== null ){
+						console.log('key:', key, 'val:', item[key] );
+					}
+				}
+			}
+
+
 
 			var html = tpl_list({
 				title: 	name,
