@@ -207,8 +207,8 @@ module.exports.add = function(_name, fields){
 							console.log('# matched key:', key, 'val:', item[key] );
 
 							items[i][key] = items[i][key].replace('products', 'products/img');
-							items[i][key] = items[i][key].replace('jpg', 'jpeg');
-							items[i][key] = '<a href="'+ items[i][key] +'">'+ items[i][key] +'</a>';
+							items[i][key] = items[i][key].replace('1136x640.jpg', '640x1136.jpeg');
+							items[i][key] = '<a href="'+ items[i][key] +'">'+ (items[i][key].split('img/')[1]) +'</a>';
 							console.log('> result:', items[i][key] );
 						}
 					}
