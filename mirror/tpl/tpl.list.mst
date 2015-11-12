@@ -21,7 +21,7 @@
 <body>
 
 <div>
-	<a href="/pub/register/csv"><button type="button" class="btn btn-primary">Download CSV</button></a>
+	<a href="/pub/register/csv2"><button type="button" class="btn btn-primary">Download CSV</button></a>
 </div>
 
 
