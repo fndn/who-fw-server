@@ -1,43 +1,3 @@
-
-
-/**
-
-Usage: mirror.add('Kitten', ['name', 'age']);
-
-This will create a Mongoose Schema with the supplied keys
-and expose a REST interface to the model.
-
-GET  /kitten 			> all
-GET  /Kitten/:id 		> one
-GET  /kitten/gte/:Date 	> all newer than :Date
-PUT  /kitten 			> add (with req.body)
-POST /kitten/:id 		> update (with req.body)
-DELETE /kitten/:id 		> delete 
-
-
-## TODO
-
-Append '.json|csv|simple' to all GET requests. JSON is the default.
-Or maybe just .tsv ?
-Example:
-	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.kv`
-	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.json`
-
-
-## Notes
-
-gte function:
-- Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
-
-diff function:
-- The objects *must* have a "name" field
-
-start any endpoint with "/pub" to allow un-authenticated access
-
-**/
-
-
-
 var mongoose 	= require('mongoose');
 var bodyParser 	= require('body-parser');
 var moment 		= require('moment');
@@ -174,127 +134,66 @@ module.exports.add = function(_name, fields){
 
 	app.get('/pub/'+ name +'/list', function(req, res){
 		
-		name = 'register';
-		var re = /(^img_)(.+)(_url$)/g; 
-
 		if( !tpl_list ){
 			tpl_list = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.list.mst').toString() );
 		}
 
-		models[name].find( function(err, items) {
-			items = items.map( function(rec){ return rec._doc.doc; });
+		var headers = ["row", "name", "time", "usr_affiliation", "usr_reporter", "adr_storeType", "adr_storeBrand", "adr_incomeType", "adr_countryCode", "adr_country", "adr_neighbourhood", "adr_street", "adr_city", "adr_elvacc", "adr_posacc", "adr_elv", "adr_lng", "adr_lat", "prc_currency", "prc_normal", "prc_current", "pro_priceReduction", "pro_otherTextOnPackage", "pro_multiBuyDiscount", "pro_freeGiveAways", "pkg_hclaims", "pkg_cclaims", "pkg_mother", "pkg_children", "pkg_cartoons", "prd_brand", "prd_type", "prd_agegrp", "prd_name", "img_right_url", "img_right", "img_left_url", "img_left", "img_back_url", "img_back", "img_front_url", "img_front", "nut_serv_sodium", "nut_serv_salt", "nut_serv_protein", "nut_serv_carbohydrateOfWhichLactose", "nut_serv_carbohydrateOfWhichSugars", "nut_serv_carbohydrate", "nut_serv_fatOfWhichTrans", "nut_serv_fatOfWhichSaturates", "nut_serv_fat", "nut_serv_energyKcal", "nut_serv_energyKj", "nut_serv_servingSize", "nut_100g_sodium", "nut_100g_salt", "nut_100g_protein", "nut_100g_carbohydrateOfWhichLactose", "nut_100g_carbohydrateOfWhichSugars", "nut_100g_carbohydrate", "nut_100g_fatOfWhichTrans", "nut_100g_fatOfWhichSaturates", "nut_100g_fat", "nut_100g_energyKcal", "nut_100g_energyKj"];
 
-			//console.log('items', items); // array of objects
-			//rec.img_back_url = rec.img_back_url.replace('products', 'products/img');
-			//rec.img_back_url = rec.img_back_url.replace('jpg', 'jpeg');
-			// https://whofw.fndn.dk/pub/products/img/VyY08H8lg-back-2040x6136.jpeg
-			// https://whofw.fndn.dk/pub/products/img/Ek8ClsVxg-back-1136x640.jpg
+		var forced_collection_name = ( __dirname.indexOf('/Users/js/') === 0 ) ? 'register2' : 'register';
 
-			console.log('items.length', items.length);
+		var doc = to_csv(forced_collection_name, headers, function(err, doc){
+			
+			//console.log("#cb", err, doc);	
 
-			if( items.length === 0){
+			var items = [];
+
+			if( err || doc.length === 0){
 				items = [{}];
-			}else{
+				return res.json({"error":"no data"});
+			}
 
-				for(var i=0, len = items.length; i<len; i++){
-					var item = items[i];
-					var keys = Object.keys(item);
-					//console.log('item:', item, 'keys:', keys );
-					for(var j=0, len2 = keys.length; j<len2; j++){
-						var key = keys[j];
-						//console.log('testing key:', key );
-						if( re.exec(key) !== null ){
-							console.log('# matched key:', key, 'val:', item[key] );
+			var lines = doc.split("\n");//.slice(1); // convert to array, and remove first row
 
-							items[i][key] = items[i][key].replace('products', 'products/img');
-							items[i][key] = items[i][key].replace('1136x640.jpg', '640x1136.jpeg');
-							items[i][key] = '<a target="_blank" href="'+ items[i][key] +'">'+ (items[i][key].split('-')[2]) +'</a>';
-							console.log('> result:', items[i][key] );
-						}
-					}
-				}
+			for(var i=1, len = lines.length; i<len; i++){
+				var line = lines[i];
+				var parts = line.split(';');
+
+				parts[0] = i; // $headers[0] is "row", and there is no $row in the data, so parts[0] is always '-'. Replace it with $i
+				
+				items.push( parts );
 			}
 
 			var html = tpl_list({
 				title: 	name,
-				headers: Object.keys(items[0]),
+				headers: headers,
 				records: items
 			});
 
 			res.setHeader('content-type', 'text/html');
 			res.send( html );
-		});
+
+		});	
 	});
 
-	
 	app.get('/pub/'+ name +'/csv', function(req, res){ 
+		//var headers = ["_id", "adr_elvacc", "adr_posacc", "adr_elv", "adr_lng", "adr_lat", "prc_currency", "prc_normal", "prc_current", "pro_priceReduction", "pro_otherTextOnPackage", "pro_multiBuyDiscount", "pro_freeGiveAways", "pkg_hclaims", "pkg_cclaims", "pkg_mother", "pkg_children", "pkg_cartoons", "usr_affiliation", "usr_reporter", "prd_brand", "prd_type", "prd_agegrp", "prd_name", "adr_storeType", "adr_storeBrand", "adr_incomeType", "adr_countryCode", "adr_country", "adr_neighbourhood", "adr_street", "adr_city", "time", "hash", "name", "img_right_url", "img_right", "img_left_url", "img_left", "img_back_url", "img_back", "img_front_url", "img_front", "nut_serv_sodium", "nut_serv_salt", "nut_serv_protein", "nut_serv_carbohydrateOfWhichLactose", "nut_serv_carbohydrateOfWhichSugars", "nut_serv_carbohydrate", "nut_serv_fatOfWhichTrans", "nut_serv_fatOfWhichSaturates", "nut_serv_fat", "nut_serv_energyKcal", "nut_serv_energyKj", "nut_serv_servingSize", "nut_100g_sodium", "nut_100g_salt", "nut_100g_protein", "nut_100g_carbohydrateOfWhichLactose", "nut_100g_carbohydrateOfWhichSugars", "nut_100g_carbohydrate", "nut_100g_fatOfWhichTrans", "nut_100g_fatOfWhichSaturates", "nut_100g_fat", "nut_100g_energyKcal", "nut_100g_energyKj"];
+		var headers = ["name", "time", "usr_affiliation", "usr_reporter", "adr_storeType", "adr_storeBrand", "adr_incomeType", "adr_countryCode", "adr_country", "adr_neighbourhood", "adr_street", "adr_city", "adr_elvacc", "adr_posacc", "adr_elv", "adr_lng", "adr_lat", "prc_currency", "prc_normal", "prc_current", "pro_priceReduction", "pro_otherTextOnPackage", "pro_multiBuyDiscount", "pro_freeGiveAways", "pkg_hclaims", "pkg_cclaims", "pkg_mother", "pkg_children", "pkg_cartoons", "prd_brand", "prd_type", "prd_agegrp", "prd_name", "img_right_url", "img_right", "img_left_url", "img_left", "img_back_url", "img_back", "img_front_url", "img_front", "nut_serv_sodium", "nut_serv_salt", "nut_serv_protein", "nut_serv_carbohydrateOfWhichLactose", "nut_serv_carbohydrateOfWhichSugars", "nut_serv_carbohydrate", "nut_serv_fatOfWhichTrans", "nut_serv_fatOfWhichSaturates", "nut_serv_fat", "nut_serv_energyKcal", "nut_serv_energyKj", "nut_serv_servingSize", "nut_100g_sodium", "nut_100g_salt", "nut_100g_protein", "nut_100g_carbohydrateOfWhichLactose", "nut_100g_carbohydrateOfWhichSugars", "nut_100g_carbohydrate", "nut_100g_fatOfWhichTrans", "nut_100g_fatOfWhichSaturates", "nut_100g_fat", "nut_100g_energyKcal", "nut_100g_energyKj"];
+		
+		var forced_collection_name = ( __dirname.indexOf('/Users/js/') === 0 ) ? 'register2' : 'register';
 
-		name = 'register';
+		var doc = to_csv(forced_collection_name, headers, function(err, doc){
+			//console.log("#cb", err, doc);
 
-		models[name].find( function(err, items) {
-			items = items.map( function(rec){ return rec._doc.doc; });
-
-			if( !items.length ){
+			if( err || !doc.length ){
+				err = err || "no data";
 				res.json({"error":"no data"});
 				return;
 			}
-			
-			var doc = '';
-			doc += Object.keys(items[0]).join(';');
-			doc += "\n";
-			for(var i in items){
-				var row = items[i];
-				var vals = [];
-				for(var j in row){
-					vals.push( row[j] );
-				}
-				doc += vals.join(';');
-				doc += "\n";
-			}
+
 			res.setHeader('content-type', 'text/csv');
 			res.send( doc );
-		});
-	});
 
-	app.get('/pub/'+ name +'/csv2', function(req, res){ 
-
-		name = 'register';
-
-		var headers = ["_id", "adr_elvacc", "adr_posacc", "adr_elv", "adr_lng", "adr_lat", "prc_currency", "prc_normal", "prc_current", "pro_priceReduction", "pro_otherTextOnPackage", "pro_multiBuyDiscount", "pro_freeGiveAways", "pkg_hclaims", "pkg_cclaims", "pkg_mother", "pkg_children", "pkg_cartoons", "usr_affiliation", "usr_reporter", "prd_brand", "prd_type", "prd_agegrp", "prd_name", "adr_storeType", "adr_storeBrand", "adr_incomeType", "adr_countryCode", "adr_country", "adr_neighbourhood", "adr_street", "adr_city", "time", "hash", "name", "img_right_url", "img_right", "img_left_url", "img_left", "img_back_url", "img_back", "img_front_url", "img_front", "nut_serv_sodium", "nut_serv_salt", "nut_serv_protein", "nut_serv_carbohydrateOfWhichLactose", "nut_serv_carbohydrateOfWhichSugars", "nut_serv_carbohydrate", "nut_serv_fatOfWhichTrans", "nut_serv_fatOfWhichSaturates", "nut_serv_fat", "nut_serv_energyKcal", "nut_serv_energyKj", "nut_serv_servingSize", "nut_100g_sodium", "nut_100g_salt", "nut_100g_protein", "nut_100g_carbohydrateOfWhichLactose", "nut_100g_carbohydrateOfWhichSugars", "nut_100g_carbohydrate", "nut_100g_fatOfWhichTrans", "nut_100g_fatOfWhichSaturates", "nut_100g_fat", "nut_100g_energyKcal", "nut_100g_energyKj"];
-
-		models[name].find( function(err, items) {
-			items = items.map( function(rec){ return rec._doc.doc; });
-
-			if( !items.length ){
-				res.json({"error":"no data"});
-				return;
-			}
-			
-			var doc = headers.join(';') +"\n";
-
-			//console.log("#1 doc", doc);
-
-			for(var i in items){
-				var row = items[i];
-
-				//console.log( i +" row", row);
-
-				var vals = [];	
-				for(var j in headers){
-					var h = headers[j];
-					
-					var keys = Object.keys(row);
-					if( keys.indexOf(h) > -1 ){
-						vals.push(row[h]);
-					}else{
-						vals.push('-');
-					}					
-				}
-				doc += vals.join(';');
-				doc += "\n";
-			}
-			res.setHeader('content-type', 'text/csv');
-			res.send( doc );
 		});
 	});
 
@@ -495,7 +394,85 @@ module.exports.add = function(_name, fields){
 
 }
 
+// CSV
+
+// note: Only tested for 'register'
+function to_csv(name, headers, callback){ 
+
+	//console.log("to_csv", name, models[name] );
+
+	var re = /(^img_)(.+)(_url$)/g; 
+
+	models[name].find( function(err, items) {
+
+		//console.log("#1", items[0]);
+
+		items = items.map( function(rec){ return rec._doc.doc; });
+
+		if( err || !items.length ){
+			err = err || "no data";
+			return callback(err, []);
+		}
+		
+		var doc = headers.join(';') +"\n";
+
+		for(var i in items){
+			var row = items[i];
+			var vals = [];	
+			for(var j in headers){
+				var h = headers[j];
+				
+				var keys = Object.keys(row);
+				if( keys.indexOf(h) > -1 ){
+					var value = (''+ row[h] );
+					
+					// escape:
+					value = value.replace(";", ".");
+					value = value.replace("null", "");
+					
+					value = value.replace("false", "N");
+					value = value.replace("true", "Y");
+
+					if( h == 'adr_elvacc' || h == 'adr_posacc' || h == 'adr_elv' ){
+						value = (value * 1.0).toFixed(2);
+					}
+
+
+					if( re.exec(h) !== null ){
+						//console.log('# matched key:', h, 'val:', value );
+
+						// https://whofw.fndn.dk/pub/products/img/EJeqMUuzg-right-640x1136.jpeg
+						// 						/pub/products/EJeqMUuzg-right-1136x640.jpg
+
+
+						value = value.replace('products', 'products/img');
+						var url = value.replace('1136x640.jpg', '640x1136.jpeg');
+						
+						value  = '<a target="_blank" href="https://whofw.fndn.dk'+ url +'">';
+						//value += '<img src="https://whofw.fndn.dk'+ url.replace('640x1136.jpeg', '21x38.jpeg') +'" />';
+						value += '<img src="https://whofw.fndn.dk'+ url.replace('640x1136.jpeg', '40x30.jpeg') +'" />';
+						//value += (url.split('-')[2]);
+						value += '</a>';						
+
+						//console.log('> result:', value );
+					}
+
+					vals.push(value);
+
+				}else{
+					vals.push('-');
+				}					
+			}
+			doc += vals.join(';');
+			doc += "\n";
+		}
+		callback(null, doc.trim() );
+	});
+}
+
+
 // Utilities
+
 
 function _compute_dif(tablename, list, cb){
 
@@ -651,3 +628,42 @@ function _strip_fromObject(obj){
 	return ret;
 }
 
+
+
+
+
+/**
+
+Usage: mirror.add('Kitten', ['name', 'age']);
+
+This will create a Mongoose Schema with the supplied keys
+and expose a REST interface to the model.
+
+GET  /kitten 			> all
+GET  /Kitten/:id 		> one
+GET  /kitten/gte/:Date 	> all newer than :Date
+PUT  /kitten 			> add (with req.body)
+POST /kitten/:id 		> update (with req.body)
+DELETE /kitten/:id 		> delete 
+
+
+## TODO
+
+Append '.json|csv|simple' to all GET requests. JSON is the default.
+Or maybe just .tsv ?
+Example:
+	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.kv`
+	`curl -X GET localhost:8080/kitten/55cb9c108a48f5cb5129d7fd.json`
+
+
+## Notes
+
+gte function:
+- Using JS Date() as pr http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+
+diff function:
+- The objects *must* have a "name" field
+
+start any endpoint with "/pub" to allow un-authenticated access
+
+**/

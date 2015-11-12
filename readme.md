@@ -27,3 +27,5 @@ Call `mirror.add(collectionName, [fieldNames]);` to create
 ## tips
 
 mongo <dbname> --eval "db.dropDatabase()"
+
+mongoimport -d FWA_PILOT_151106_2 -c register --file register.json
