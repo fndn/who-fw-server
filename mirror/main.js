@@ -287,7 +287,7 @@ module.exports.add = function(_name, fields){
 					var vals = [];	
 					var keys = Object.keys(row);
 					if( keys.indexOf(h) > -1 ){
-						vals.push(row[h]);
+						vals.push(row[ keys[h] ]);
 					}else{
 						vals.push('-');
 					}					
