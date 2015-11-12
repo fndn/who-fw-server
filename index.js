@@ -32,7 +32,7 @@ app.use('/mex', mex_mw(mex_cnf));
 
 // Connect Simple Auth
 console.log( chalk.green("Enabling Simple Auth") );
-//app.use( sauth() );
+app.use( sauth() );
 
 // Connect Mirror
 mirror.init( app, database );
