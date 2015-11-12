@@ -270,9 +270,9 @@ module.exports.add = function(_name, fields){
 				return;
 			}
 			
-			//var doc = headers.join(';') +"\n";
+			var doc = headers.join(';') +"\n";
 
-			console.log("#1 doc", doc);
+			//console.log("#1 doc", doc);
 
 			for(var i in items){
 				var row = items[i];
