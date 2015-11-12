@@ -272,11 +272,18 @@ module.exports.add = function(_name, fields){
 			
 			var doc = headers.join(';') +"\n";
 
+			console.log("#1 doc", doc);
+
 			for(var i in items){
 				var row = items[i];
 
+				console.log( i +" row", row);
+
 				for(var j in headers){
 					var h = headers[j];
+
+					console.log( j +" header", h);
+
 					var vals = [];	
 					var keys = Object.keys(row);
 					if( keys.indexOf(h) > -1 ){
