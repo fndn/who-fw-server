@@ -232,7 +232,12 @@ module.exports.add = function(_name, fields){
 		name = 'register';
 
 		models[name].find( function(err, items) {
-			items = items.map( function(rec){ return rec._doc.doc; })
+			items = items.map( function(rec){ return rec._doc.doc; });
+
+			if( !items.length ){
+				res.json({"error":"no data"});
+				return;
+			}
 			
 			var doc = '';
 			doc += Object.keys(items[0]).join(';');
@@ -242,6 +247,43 @@ module.exports.add = function(_name, fields){
 				var vals = [];
 				for(var j in row){
 					vals.push( row[j] );
+				}
+				doc += vals.join(';');
+				doc += "\n";
+			}
+			res.setHeader('content-type', 'text/csv');
+			res.send( doc );
+		});
+	});
+
+	app.get('/pub/'+ name +'/csv2', function(req, res){ 
+
+		name = 'register';
+
+		var headers = ["_id", "adr_elvacc", "adr_posacc", "adr_elv", "adr_lng", "adr_lat", "prc_currency", "prc_normal", "prc_current", "pro_priceReduction", "pro_otherTextOnPackage", "pro_multiBuyDiscount", "pro_freeGiveAways", "pkg_hclaims", "pkg_cclaims", "pkg_mother", "pkg_children", "pkg_cartoons", "usr_affiliation", "usr_reporter", "prd_brand", "prd_type", "prd_agegrp", "prd_name", "adr_storeType", "adr_storeBrand", "adr_incomeType", "adr_countryCode", "adr_country", "adr_neighbourhood", "adr_street", "adr_city", "time", "hash", "name", "img_right_url", "img_right", "img_left_url", "img_left", "img_back_url", "img_back", "img_front_url", "img_front", "nut_serv_sodium", "nut_serv_salt", "nut_serv_protein", "nut_serv_carbohydrateOfWhichLactose", "nut_serv_carbohydrateOfWhichSugars", "nut_serv_carbohydrate", "nut_serv_fatOfWhichTrans", "nut_serv_fatOfWhichSaturates", "nut_serv_fat", "nut_serv_energyKcal", "nut_serv_energyKj", "nut_serv_servingSize", "nut_100g_sodium", "nut_100g_salt", "nut_100g_protein", "nut_100g_carbohydrateOfWhichLactose", "nut_100g_carbohydrateOfWhichSugars", "nut_100g_carbohydrate", "nut_100g_fatOfWhichTrans", "nut_100g_fatOfWhichSaturates", "nut_100g_fat", "nut_100g_energyKcal", "nut_100g_energyKj"];
+
+		models[name].find( function(err, items) {
+			items = items.map( function(rec){ return rec._doc.doc; });
+
+			if( !items.length ){
+				res.json({"error":"no data"});
+				return;
+			}
+			
+			var doc = headers.join(';') +"\n";
+
+			for(var i in items){
+				var row = items[i];
+
+				for(var j in headers){
+					var h = headers[j];
+					var vals = [];	
+					var keys = Object.keys(row);
+					if( keys.indexOf(h) > -1 ){
+						vals.push(row[h]);
+					}else{
+						vals.push('-');
+					}					
 				}
 				doc += vals.join(';');
 				doc += "\n";
