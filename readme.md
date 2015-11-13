@@ -29,3 +29,19 @@ Call `mirror.add(collectionName, [fieldNames]);` to create
 mongo <dbname> --eval "db.dropDatabase()"
 
 mongoimport -d FWA_PILOT_151106_2 -c register --file register.json
+
+
+---
+Port Scan has started…
+
+Port Scanning host: 46.101.177.65
+
+	 Open TCP Port: 	22     		ssh
+	 Open TCP Port: 	80     		http
+	 Open TCP Port: 	443    		https
+	 Open TCP Port: 	8071
+	 Open TCP Port: 	8081   		sunproxyadmin
+	 Open TCP Port: 	8091
+	 Open TCP Port: 	9100   		hp-pdl-datastr
+Port Scan has completed…
+

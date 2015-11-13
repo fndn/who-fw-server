@@ -39,7 +39,7 @@ module.exports.init = function(_app, _databaseName){
 
 	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use(bodyParser.json());
+	app.use(bodyParser.json({limit: '500mb'}));
 
 	// Connect Middleware
 	app.use(function(req, res, next){
@@ -197,6 +197,55 @@ module.exports.add = function(_name, fields){
 		});
 	});
 
+
+	var tpl_map = null;
+
+	/* 
+	app.get('/pub/'+ name +'/map', function(req, res){
+		
+		if( !tpl_map ){
+			tpl_map = handlebars.compile( fs.readFileSync('./mirror/tpl/tpl.map.mst').toString() );
+		}
+
+		var headers = ["name", "time", "adr_lng", "adr_lat"];
+
+		var forced_collection_name = ( __dirname.indexOf('/Users/js/') === 0 ) ? 'register2' : 'register';
+
+		var doc = to_csv(forced_collection_name, headers, function(err, doc){
+			
+			//console.log("#cb", err, doc);	
+
+			var items = [];
+
+			if( err || doc.length === 0){
+				items = [{}];
+				return res.json({"error":"no data"});
+			}
+
+			var lines = doc.split("\n");
+
+			for(var i=1, len = lines.length; i<len; i++){
+				var line = lines[i];
+				var parts = line.split(';');
+				var o = {};
+				for(var j=0; j<headers.length; j++){
+					o[ headers[j] ] = parts[j]
+				});
+				items.push( o );	
+			}
+
+			var html = tpl_map({
+				title: 	name,
+				headers: headers,
+				records: items
+			});
+
+			res.setHeader('content-type', 'text/html');
+			res.send( html );
+
+		});	
+	});
+	*/
 
 	app.get('/pub/'+ name +'/img/:imagename', function(req, res){ 
 		var imgname = req.params.imagename.split(".")[0];
