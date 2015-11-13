@@ -39,7 +39,7 @@ module.exports.init = function(_app, _databaseName){
 
 	// Connect bodyParser
 	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use(bodyParser.json({limit: '500mb'}));
+	app.use(bodyParser.json({limit: '128mb'}));
 
 	// Connect Middleware
 	app.use(function(req, res, next){
