@@ -16,6 +16,8 @@ var models = [];
 var dbname = '';
 var uploader = null;
 
+var post_size_limit = '256mb';
+
 var use_strict_schema = false;
 
 module.exports.init = function(_app, _databaseName){
@@ -38,8 +40,8 @@ module.exports.init = function(_app, _databaseName){
 	app.set('etag', 'strong');
 
 	// Connect bodyParser
-	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use(bodyParser.json({limit: '128mb'}));
+	app.use(bodyParser.urlencoded({ extended: false, limit: post_size_limit }));
+	app.use(bodyParser.json({limit: post_size_limit}));
 
 	// Connect Middleware
 	app.use(function(req, res, next){
