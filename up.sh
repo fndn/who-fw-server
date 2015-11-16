@@ -22,7 +22,7 @@ ssh root@$SERVER 'cd '$REMOTE_DIR'; git pull origin master; pm2 reload all;'
 
 echo ""
 echo "restarting (1)"
-sleep 3 # give the app time to (re)start
+sleep 4 # give the app time to (re)start
 
 
 echo "updated server, now running version: curl https://$APIDOMAIN/version"
